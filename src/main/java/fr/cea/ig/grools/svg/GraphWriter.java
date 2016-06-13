@@ -35,18 +35,21 @@ package fr.cea.ig.grools.svg;
 
 
 import ch.qos.logback.classic.Logger;
-import fr.cea.ig.grools.common.BiMap;
-import fr.cea.ig.grools.common.BidirectionalMap;
+import fr.cea.ig.grools.Reasoner;
+
 import fr.cea.ig.grools.common.Command;
 import fr.cea.ig.grools.common.ResourceExporter;
-import fr.cea.ig.grools.model.PriorKnowledge;
+import fr.cea.ig.grools.fact.Concept;
+import fr.cea.ig.grools.fact.Observation;
+import fr.cea.ig.grools.fact.PriorKnowledge;
+import fr.cea.ig.grools.fact.Relation;
+import fr.cea.ig.grools.logic.Conclusion;
+import fr.cea.ig.grools.logic.TruthValue;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
 
 /**
  *
@@ -64,63 +67,65 @@ public final class GraphWriter {
     private final String    outputDir;
     private final HtmlFile  htmlFile;
 
-    private static String getId( final String prefix, final PriorKnowledge knowledge, final BiMap<String, PriorKnowledge> ids ){
-        boolean isRunning   = true;
-        final String oriId  = prefix + "_" + knowledge.getName().replace(" ", "_");
-        String  newId       = oriId;
-        int     copy        = 1;
-        while( isRunning ){
-            if( ids.containsKey(newId) && ids.get(newId) != knowledge ) {
-                newId = oriId + String.valueOf( copy );
-                copy++;
-            }
-            else{
-                ids.put(newId, knowledge);
-                isRunning = false;
-            }
+    private static String toColor( final Conclusion conclusion){
+        String          color;
+        switch (conclusion){
+            case ABSENT:
+            case UNEXPLAINED:
+            case UNCONFIRMED_PRESENCE:
+            case UNCONFIRMED_ABSENCE:       color = "PaleTurquoise"; break;
+            case CONFIRMED_ABSENCE:
+            case CONFIRMED_PRESENCE:        color = "PaleGreen"; break;
+            case MISSING:
+            case UNEXPECTED_ABSENCE:
+            case UNEXPECTED_PRESENCE:       color = "MistyRose"; break;
+            case AMBIGUOUS:
+            case AMBIGUOUS_PRESENCE:
+            case AMBIGUOUS_ABSENCE:         color = "Fuchsia"; break;
+            case UNCONFIRMED_CONTRADICTORY:
+            case AMBIGUOUS_CONTRADICTORY:   color = "BlueViolet"; break;
+            case CONTRADICTORY_PRESENCE:
+            case CONTRADICTORY_ABSENCE:     color = "LavenderBlush"; break;
+            default:                        color = "GhostWhite"; break;
         }
-        return  newId;
+        return color;
     }
 
-    private void generateId(final String graphName, final List<PriorKnowledge> knowledgeList, final BiMap<String, PriorKnowledge> ids ){
-        for( PriorKnowledge knowledge : knowledgeList)
-            getId( graphName , knowledge, ids );
+    private static boolean addNode( final Concept concept, final String id, final DotFile dotFile){
+        boolean status = false;
+        if( concept instanceof PriorKnowledge ) {
+            final PriorKnowledge pk = (PriorKnowledge ) concept;
+            dotFile.addNode( id, toColor( pk.getConclusion() ), "box" );
+            status = true;
+        }
+        else if( concept instanceof Observation ) {
+            final Observation o = (Observation ) concept;
+            dotFile.addNode( id, (o.getTruthValue() == TruthValue.t)? "PaleTurquoise":"MistyRose" , "oval" );
+            status = true;
+        }
+        return status;
     }
 
-    private String writeDotFile(final String graphName, final BiMap<String, PriorKnowledge> ids ) throws Exception {
+    private String writeDotFile(final String graphName, final Reasoner reasoner ) throws Exception {
         final String    dotFilename = Paths.get(outputDir, graphName + ".dot").toString();
         final DotFile   dotFile     = new DotFile(graphName, dotFilename);
-        String          color       = "Black";
-        String          id;
-        PriorKnowledge knowledge;
 
-        for( final Map.Entry<String,PriorKnowledge> entry : ids.entrySet()){
-            knowledge   = entry.getValue();
-            id          = entry.getKey();
-            switch (knowledge.getConclusion()){
-                case UNCONFIRMED_PRESENCE:
-                case UNCONFIRMED_ABSENCE:   color = "PaleTurquoise"; break;
-                case CONFIRMED_ABSENCE:
-                case CONFIRMED_PRESENCE:    color = "PaleGreen "; break;
-                case UNEXPECTED:
-                case UNEXPECTED_ABSENCE:
-                case UNEXPECTED_PRESENCE:   color = "MistyRose "; break;
-                case CONTRADICTORY:
-                case CONTRADICTORY_PRESENCE:
-                case CONTRADICTORY_ABSENCE: color = "LavenderBlush"; break;
-                default:                    color = "GhostWhite"; break;
+        for( final Relation relation : reasoner.getRelations()){
+            final Concept source    = relation.getSource();
+            final Concept target    = relation.getTarget();
+            final String  sourceId  = source.getName().replaceAll( "[\\s.\\-/]", "_" );
+            final String  targetId  = target.getName().replaceAll( "[\\s.\\-/]", "_" );
+            if( !addNode( source, sourceId, dotFile ) ){
+                System.err.println( "Unexpected type: " + source.getClass() );
+                continue;
             }
-            switch ( knowledge.getNodeType() ){
-                case OR: dotFile.addNode(id, color, "octagon"); break;
-                case AND:
-                default: dotFile.addNode(id, color); break;
+            if( !addNode( target, targetId, dotFile ) ){
+                System.err.println( "Unexpected type: " + source.getClass() );
+                continue;
             }
-            BiMap<PriorKnowledge,String> idsInv = ids.inverse();
-            for( final PriorKnowledge parent: knowledge.getPartOf() ) {
-                final String parentId = idsInv.get(parent);
-                dotFile.linkNode( parentId, id );
-            }
+            dotFile.linkNode( sourceId, targetId, relation.getType().toString() );
         }
+
         dotFile.close();
         dotToSvg(graphName, dotFile);
         return dotFilename;
@@ -131,11 +136,10 @@ public final class GraphWriter {
         Command.run("dot", Arrays.asList("-Tsvg", "-o" + outFile, dotFile.getAbsolutePath()));
     }
 
-    private String writeJsFile( final String graphName, final Map<String, PriorKnowledge> ids ) throws IOException {
+    private String writeJsFile( final String graphName, final Reasoner reasoner ) throws IOException {
         final String    jsFilename  = Paths.get(outputDir, "js", graphName + ".js").toString();
         final JsFile    jsFile      = new JsFile(jsFilename);
         String          color       = "";
-        PriorKnowledge knowledge;
         jsFile.writeln(String.format("    const object_svg_%s   = document.getElementById('%s');", graphName, graphName));
         jsFile.writeln(String.format("    const svgdoc_%s       = object_svg_%s.contentDocument;", graphName, graphName));
         jsFile.writeln(              "    const tooltips        = document.createElement('div');");
@@ -143,9 +147,9 @@ public final class GraphWriter {
         jsFile.writeln(              "    tooltips.className    = 'grools';");
         jsFile.writeln(              "    document.body.appendChild(tooltips);");
         jsFile.writeln(              "    const tooltipsId    = document.getElementById('tooltips-content');");
-        for( final Map.Entry<String,PriorKnowledge> entry : ids.entrySet()){
-            knowledge = entry.getValue();
-            jsFile.writeln(String.format("    const svg_%s = svgdoc_%s.getElementById('%s');", entry.getKey(), graphName, entry.getKey() ));
+        for( final PriorKnowledge knowledge : reasoner.getPriorKnowledges()){
+            final String name = knowledge.getName().replace(" ", "_");
+            jsFile.writeln(String.format("    const svg_%s = svgdoc_%s.getElementById('%s');", name, graphName, name ));
             switch (knowledge.getConclusion()){
                 case CONFIRMED_ABSENCE:
                 case CONFIRMED_PRESENCE:    color = "green"; break;
@@ -153,7 +157,7 @@ public final class GraphWriter {
                 case UNCONFIRMED_ABSENCE:   color = "Chartreuse"; break;
                 default:                    color = "LightPink"; break;
             }
-            jsFile.writeln(String.format("    tooltips_event(tooltipsId, svg_%s, createInformativeNode('%s', '%s') );", entry.getKey(), knowledge.getConclusion(), color) );
+            jsFile.writeln(String.format("    tooltips_event(tooltipsId, svg_%s, createInformativeNode('%s', '%s') );", name, knowledge.getConclusion(), color) );
         }
         jsFile.close();
         return jsFilename;
@@ -164,15 +168,14 @@ public final class GraphWriter {
         htmlFile        = new HtmlFile(Paths.get(outputDir,"result.html").toString());
     }
 
-    public void addGraph( final String graphName, final List<PriorKnowledge> knowledgeList) throws Exception {
-        final BiMap<String, PriorKnowledge>  ids             = new BidirectionalMap<String, PriorKnowledge>();
-        generateId(graphName, knowledgeList, ids);
-        final String    dotFilename = writeDotFile(graphName, ids);
-        final String    jsFilename  = writeJsFile( graphName, ids );
+    public void addGraph( final String graphName, final Reasoner reasoner) throws Exception {
+        final String    name = graphName.replace( "-", "_" );
+        final String    dotFilename = writeDotFile( name, reasoner);
+        final String    jsFilename  = writeJsFile( name, reasoner );
         LOG.info("File copied " + jsFilename );
         LOG.info("File copied " + dotFilename );
 
-        htmlFile.addGraph(graphName, graphName+".svg");
+        htmlFile.addGraph(name, name+".svg");
 
         String jsPath3 = ResourceExporter.export("/js/svg_common.js", outputDir);
         LOG.info("File copied " + jsPath3 );
