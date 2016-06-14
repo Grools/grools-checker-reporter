@@ -51,7 +51,7 @@ import java.io.IOException;
  * }
  * @enduml
  */
-public abstract class  WrapFile {
+public class  WrapFile {
     private static final Logger LOG = (Logger) LoggerFactory.getLogger(WrapFile.class);
     protected static final String exepected     = "#C1FFC1";
     protected static final String unexepected   = "#FFC0CB";

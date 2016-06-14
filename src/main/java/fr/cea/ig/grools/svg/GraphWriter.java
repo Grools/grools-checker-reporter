@@ -39,17 +39,21 @@ import fr.cea.ig.grools.Reasoner;
 
 import fr.cea.ig.grools.common.Command;
 import fr.cea.ig.grools.common.ResourceExporter;
+import fr.cea.ig.grools.common.WrapFile;
 import fr.cea.ig.grools.fact.Concept;
 import fr.cea.ig.grools.fact.Observation;
 import fr.cea.ig.grools.fact.PriorKnowledge;
 import fr.cea.ig.grools.fact.Relation;
-import fr.cea.ig.grools.logic.Conclusion;
 import fr.cea.ig.grools.logic.TruthValue;
+import fr.cea.ig.grools.logic.TruthValuePowerSet;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  *
@@ -65,28 +69,32 @@ import java.util.Arrays;
 public final class GraphWriter {
     private static final Logger LOG = (Logger) LoggerFactory.getLogger(GraphWriter.class);
     private final String    outputDir;
-    private final HtmlFile  htmlFile;
+    private final WrapFile  htmlIndex;
 
-    private static String toColor( final Conclusion conclusion){
-        String          color;
-        switch (conclusion){
-            case ABSENT:
-            case UNEXPLAINED:
-            case UNCONFIRMED_PRESENCE:
-            case UNCONFIRMED_ABSENCE:       color = "PaleTurquoise"; break;
-            case CONFIRMED_ABSENCE:
-            case CONFIRMED_PRESENCE:        color = "PaleGreen"; break;
-            case MISSING:
-            case UNEXPECTED_ABSENCE:
-            case UNEXPECTED_PRESENCE:       color = "MistyRose"; break;
-            case AMBIGUOUS:
-            case AMBIGUOUS_PRESENCE:
-            case AMBIGUOUS_ABSENCE:         color = "Fuchsia"; break;
-            case UNCONFIRMED_CONTRADICTORY:
-            case AMBIGUOUS_CONTRADICTORY:   color = "BlueViolet"; break;
-            case CONTRADICTORY_PRESENCE:
-            case CONTRADICTORY_ABSENCE:     color = "LavenderBlush"; break;
-            default:                        color = "GhostWhite"; break;
+    private static String colorList( final PriorKnowledge pk){
+        return toColor( pk.getPrediction() ) + ":0.5;" + toColor( pk.getExpectation() );
+    }
+
+    private static String toColor( final TruthValuePowerSet tvSet ){
+        String color;
+        switch ( tvSet ){
+            case T: color = "Lime"; break;
+            case TF:
+            case TFB:
+            case NTF:
+            case NTFB:
+            case NF:
+            case FB:
+            case NFB:
+            case F: color = "Coral"; break;
+            case NB:
+            case NTB:
+            case TB:
+            case B: color = "Plum"; break;
+            case n:
+            case NT:
+            case N:
+            default: color = "white";
         }
         return color;
     }
@@ -95,22 +103,22 @@ public final class GraphWriter {
         boolean status = false;
         if( concept instanceof PriorKnowledge ) {
             final PriorKnowledge pk = (PriorKnowledge ) concept;
-            dotFile.addNode( id, toColor( pk.getConclusion() ), "box" );
+            dotFile.addNode( id, colorList( pk ), "box" );
             status = true;
         }
         else if( concept instanceof Observation ) {
             final Observation o = (Observation ) concept;
-            dotFile.addNode( id, (o.getTruthValue() == TruthValue.t)? "PaleTurquoise":"MistyRose" , "oval" );
+            dotFile.addNode( id, (o.getTruthValue() == TruthValue.t)? "Lime":"Coral" , "oval" );
             status = true;
         }
         return status;
     }
 
-    private String writeDotFile(final String graphName, final Reasoner reasoner ) throws Exception {
-        final String    dotFilename = Paths.get(outputDir, graphName + ".dot").toString();
+    private String writeDotFile(final String graphName, final Set<Relation> relations ) throws Exception {
+        final String    dotFilename = Paths.get(outputDir, graphName, graphName + ".dot").toString();
         final DotFile   dotFile     = new DotFile(graphName, dotFilename);
 
-        for( final Relation relation : reasoner.getRelations()){
+        for( final Relation relation : relations){
             final Concept source    = relation.getSource();
             final Concept target    = relation.getTarget();
             final String  sourceId  = source.getName().replaceAll( "[\\s.\\-/]", "_" );
@@ -132,12 +140,12 @@ public final class GraphWriter {
     }
 
     private void dotToSvg( final String graphName, final DotFile dotFile ) throws Exception {
-        final String outFile = Paths.get(outputDir, graphName + ".svg").toString();
+        final String outFile = Paths.get(outputDir, graphName, graphName + ".svg").toString();
         Command.run("dot", Arrays.asList("-Tsvg", "-o" + outFile, dotFile.getAbsolutePath()));
     }
 
-    private String writeJsFile( final String graphName, final Reasoner reasoner ) throws IOException {
-        final String    jsFilename  = Paths.get(outputDir, "js", graphName + ".js").toString();
+    private String writeJsFile( final String graphName, final Set<Relation> relations ) throws IOException {
+        final String    jsFilename  = Paths.get(outputDir, graphName, "js", graphName + ".js").toString();
         final JsFile    jsFile      = new JsFile(jsFilename);
         String          color       = "";
         jsFile.writeln(String.format("    const object_svg_%s   = document.getElementById('%s');", graphName, graphName));
@@ -147,7 +155,14 @@ public final class GraphWriter {
         jsFile.writeln(              "    tooltips.className    = 'grools';");
         jsFile.writeln(              "    document.body.appendChild(tooltips);");
         jsFile.writeln(              "    const tooltipsId    = document.getElementById('tooltips-content');");
-        for( final PriorKnowledge knowledge : reasoner.getPriorKnowledges()){
+        final Set<PriorKnowledge> pks = new HashSet<>(  );
+        for(final Relation relation : relations ){
+            if( relation.getSource() instanceof PriorKnowledge )
+                pks.add( ( PriorKnowledge ) relation.getSource() );
+            if( relation.getTarget() instanceof PriorKnowledge )
+                pks.add( ( PriorKnowledge ) relation.getTarget() );
+        }
+        for( final PriorKnowledge knowledge : pks){
             final String name = knowledge.getName().replace(" ", "_");
             jsFile.writeln(String.format("    const svg_%s = svgdoc_%s.getElementById('%s');", name, graphName, name ));
             switch (knowledge.getConclusion()){
@@ -163,26 +178,58 @@ public final class GraphWriter {
         return jsFilename;
     }
 
-    public GraphWriter(final String outDir ) throws IOException{
-        outputDir       = outDir;
-        htmlFile        = new HtmlFile(Paths.get(outputDir,"result.html").toString());
-    }
-
-    public void addGraph( final String graphName, final Reasoner reasoner) throws Exception {
-        final String    name = graphName.replace( "-", "_" );
-        final String    dotFilename = writeDotFile( name, reasoner);
-        final String    jsFilename  = writeJsFile( name, reasoner );
-        LOG.info("File copied " + jsFilename );
-        LOG.info("File copied " + dotFilename );
-
-        htmlFile.addGraph(name, name+".svg");
-
+    public GraphWriter(final String outDir ) throws Exception{
+        outputDir   = outDir;
+        htmlIndex   = new WrapFile( Paths.get( outputDir, "index.html").toFile() );
+        htmlIndex.writeln("<!DOCTYPE html>");
+        htmlIndex.writeln("<html>");
+        htmlIndex.writeln("    <head>");
+        htmlIndex.writeln("        <title>Reporting</title>");
+        htmlIndex.writeln("        <meta charset=\"utf-8\">");
+        htmlIndex.writeln("    </head>");
+        htmlIndex.writeln( "    </head>" );
+        htmlIndex.writeln( "    <body>" );
+        htmlIndex.writeln( "        <table style=\"width:100%\">" );
+        htmlIndex.writeln( "            <col width=\"80%\">" );
+        htmlIndex.writeln( "            <col width=\"10%\">" );
+        htmlIndex.writeln( "            <col width=\"10%\">" );
+        htmlIndex.writeln( "            <tr>" );
+        htmlIndex.writeln( "                <th>Concept</th>" );
+        htmlIndex.writeln( "                <th>Prediction</th>" );
+        htmlIndex.writeln( "                <th>Expectation</th>" );
+        htmlIndex.writeln( "            </tr>" );
         String jsPath3 = ResourceExporter.export("/js/svg_common.js", outputDir);
         LOG.info("File copied " + jsPath3 );
     }
 
-    public void close() throws IOException{
+    public void addGraph( final PriorKnowledge priorKnowledge, Set<Relation> relations) throws Exception {
+        final String graphName   = priorKnowledge.getName().replace( "-", "_" );
+
+        final File      outDir      = Paths.get( outputDir, graphName).toFile();
+        outDir.mkdirs();
+        final HtmlFile  htmlFile    = new HtmlFile(Paths.get(outputDir,graphName,"result.html").toString());
+        final String    dotFilename = writeDotFile( graphName, relations );
+        final String    jsFilename  = writeJsFile( graphName, relations );
+
+        htmlFile.addGraph(graphName, graphName+".svg");
         htmlFile.close();
+
+        final String url = "<a href=\"file://"+htmlFile.getAbsolutePath()+"\">"+graphName+"</a>";
+        htmlIndex.writeln( "            <tr>" );
+        htmlIndex.writeln( "                <td>" + url                            + "</td>" );
+        htmlIndex.writeln( "                <td>" + priorKnowledge.getPrediction()  + "</td>" );
+        htmlIndex.writeln( "                <td>" + priorKnowledge.getExpectation() + "</td>" );
+        htmlIndex.writeln( "            </tr>" );
+
+        LOG.info("File copied " + jsFilename );
+        LOG.info("File copied " + dotFilename );
+    }
+
+    public void close() throws IOException{
+        htmlIndex.writeln( "        </table>" );
+        htmlIndex.writeln( "    </body>" );
+        htmlIndex.writeln("</html>");
+        htmlIndex.close();
     }
 
 }

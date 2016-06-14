@@ -50,7 +50,7 @@ import java.util.Map;
  * @enduml
  */
 public final class HtmlFile extends WrapFile {
-    private final Map<String, String> svgs= new HashMap<String, String>() ;
+    private final Map<String, String> svgs= new HashMap<>() ;
 
     private void init() throws IOException{
         writeln("<!DOCTYPE html>");
@@ -100,7 +100,7 @@ public final class HtmlFile extends WrapFile {
         writeln("                animation-direction: alternate ;");
         writeln("            }");
         writeln("        </style>");
-        writeln("        <script type='text/javascript' src='js/svg_common.js'></script>");
+        writeln("        <script type='text/javascript' src='../js/svg_common.js'></script>");
     }
 
     public HtmlFile(final String filepath) throws IOException {
