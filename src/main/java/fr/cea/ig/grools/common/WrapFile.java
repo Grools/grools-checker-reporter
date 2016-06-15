@@ -96,4 +96,8 @@ public class  WrapFile {
     public String getAbsolutePath(){
         return file.getAbsolutePath();
     }
+
+    public String getPath(){
+        return file.getPath();
+    }
 }

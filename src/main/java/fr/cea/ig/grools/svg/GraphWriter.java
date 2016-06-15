@@ -35,7 +35,6 @@ package fr.cea.ig.grools.svg;
 
 
 import ch.qos.logback.classic.Logger;
-import fr.cea.ig.grools.Reasoner;
 
 import fr.cea.ig.grools.common.Command;
 import fr.cea.ig.grools.common.ResourceExporter;
@@ -72,7 +71,7 @@ public final class GraphWriter {
     private final WrapFile  htmlIndex;
 
     private static String colorList( final PriorKnowledge pk){
-        return toColor( pk.getPrediction() ) + ":0.5;" + toColor( pk.getExpectation() );
+        return toColor( pk.getPrediction() ) + ";0.5:" + toColor( pk.getExpectation() );
     }
 
     private static String toColor( final TruthValuePowerSet tvSet ){
@@ -147,7 +146,7 @@ public final class GraphWriter {
     private String writeJsFile( final String graphName, final Set<Relation> relations ) throws IOException {
         final String    jsFilename  = Paths.get(outputDir, graphName, "js", graphName + ".js").toString();
         final JsFile    jsFile      = new JsFile(jsFilename);
-        String          color       = "";
+        String          color;
         jsFile.writeln(String.format("    const object_svg_%s   = document.getElementById('%s');", graphName, graphName));
         jsFile.writeln(String.format("    const svgdoc_%s       = object_svg_%s.contentDocument;", graphName, graphName));
         jsFile.writeln(              "    const tooltips        = document.createElement('div');");
@@ -186,15 +185,28 @@ public final class GraphWriter {
         htmlIndex.writeln("    <head>");
         htmlIndex.writeln("        <title>Reporting</title>");
         htmlIndex.writeln("        <meta charset=\"utf-8\">");
+        htmlIndex.writeln("        <style type='text/css'>");
+        htmlIndex.writeln("            table, th, td {");
+        htmlIndex.writeln("                border: 1px solid black;");
+        htmlIndex.writeln("            }");
+        htmlIndex.writeln("            #results                                     { width:100%;}");
+        htmlIndex.writeln("            #results td                                  { padding: 5px 5px 5px 5px;}");
+        htmlIndex.writeln("            #results tr > td:first-child                 { text-align:left;}");
+        htmlIndex.writeln("            #results tr > td:first-child + td            { text-align:justify;}");
+        htmlIndex.writeln("            #results tr > td:first-child + td + td       { text-align:center;}");
+        htmlIndex.writeln("            #results tr > td:first-child + td + td + td  { text-align:center;}");
+        htmlIndex.writeln("        </style>");
         htmlIndex.writeln("    </head>");
         htmlIndex.writeln( "    </head>" );
         htmlIndex.writeln( "    <body>" );
-        htmlIndex.writeln( "        <table style=\"width:100%\">" );
-        htmlIndex.writeln( "            <col width=\"80%\">" );
+        htmlIndex.writeln( "        <table id=\"results\">" );
+        htmlIndex.writeln( "            <col width=\"20%\">" );
+        htmlIndex.writeln( "            <col width=\"60%\">" );
         htmlIndex.writeln( "            <col width=\"10%\">" );
         htmlIndex.writeln( "            <col width=\"10%\">" );
         htmlIndex.writeln( "            <tr>" );
         htmlIndex.writeln( "                <th>Concept</th>" );
+        htmlIndex.writeln( "                <th>Description</th>" );
         htmlIndex.writeln( "                <th>Prediction</th>" );
         htmlIndex.writeln( "                <th>Expectation</th>" );
         htmlIndex.writeln( "            </tr>" );
@@ -214,9 +226,10 @@ public final class GraphWriter {
         htmlFile.addGraph(graphName, graphName+".svg");
         htmlFile.close();
 
-        final String url = "<a href=\"file://"+htmlFile.getAbsolutePath()+"\">"+graphName+"</a>";
+        final String url = "<a href=\""+Paths.get(graphName,"result.html").toString()+"\">"+graphName+"</a>";
         htmlIndex.writeln( "            <tr>" );
-        htmlIndex.writeln( "                <td>" + url                            + "</td>" );
+        htmlIndex.writeln( "                <td>" + url                             + "</td>" );
+        htmlIndex.writeln( "                <td>" + priorKnowledge.getDescription() + "</td>" );
         htmlIndex.writeln( "                <td>" + priorKnowledge.getPrediction()  + "</td>" );
         htmlIndex.writeln( "                <td>" + priorKnowledge.getExpectation() + "</td>" );
         htmlIndex.writeln( "            </tr>" );

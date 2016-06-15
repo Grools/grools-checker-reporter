@@ -25,6 +25,6 @@ function createInformativeNode( text, color ){
 
 
 function tooltipsPosition( event, tooltips ){
-    tooltips.style.top = event.pageY+"px";
-    tooltips.style.left= (event.pageX + 80)+"px";
+  tooltips.style.top = (event.pageY + 40 - window.scrollY)+"px";
+  tooltips.style.left= (event.pageX - 30 - window.scrollX)+"px";
 }
