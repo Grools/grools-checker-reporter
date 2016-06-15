@@ -69,6 +69,7 @@ public final class GraphWriter {
     private static final Logger LOG = (Logger) LoggerFactory.getLogger(GraphWriter.class);
     private final String    outputDir;
     private final WrapFile  htmlIndex;
+    protected boolean isClosed;
 
     private static String colorList( final PriorKnowledge pk){
         return toColor( pk.getPrediction() ) + ";0.5:" + toColor( pk.getExpectation() );
@@ -178,6 +179,7 @@ public final class GraphWriter {
     }
 
     public GraphWriter(final String outDir ) throws Exception{
+        isClosed    = false;
         outputDir   = outDir;
         htmlIndex   = new WrapFile( Paths.get( outputDir, "index.html").toFile() );
         htmlIndex.writeln("<!DOCTYPE html>");
@@ -238,7 +240,14 @@ public final class GraphWriter {
         LOG.info("File copied " + dotFilename );
     }
 
+    public void finalize() throws Throwable {
+        if( ! isClosed )
+            close();
+        super.finalize();
+    }
+
     public void close() throws IOException{
+        isClosed = true;
         htmlIndex.writeln( "        </table>" );
         htmlIndex.writeln( "    </body>" );
         htmlIndex.writeln("</html>");

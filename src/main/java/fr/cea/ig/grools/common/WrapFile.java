@@ -60,6 +60,7 @@ public class  WrapFile {
 
     protected final File file;
     protected final BufferedOutputStream bos;
+    protected boolean isClosed;
 
     public WrapFile(final String filepath) throws IOException {
         this(new File(filepath));
@@ -74,6 +75,7 @@ public class  WrapFile {
         }
         this.file = file;
         this.bos = new BufferedOutputStream(new FileOutputStream(file), 10 * PAGE_SIZE);
+        isClosed = false;
     }
 
     public void writeln( final String line ) throws IOException {
@@ -82,7 +84,12 @@ public class  WrapFile {
     }
 
     public void close() throws IOException {
+        isClosed = true;
         bos.close();
+    }
+
+    public boolean isClosed(){
+        return isClosed;
     }
 
     public String getFileName(){
@@ -99,5 +106,12 @@ public class  WrapFile {
 
     public String getPath(){
         return file.getPath();
+    }
+
+
+    public void finalize() throws Throwable {
+        if( ! isClosed )
+            close();
+        super.finalize();
     }
 }

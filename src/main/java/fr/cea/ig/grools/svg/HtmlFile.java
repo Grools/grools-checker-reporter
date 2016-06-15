@@ -131,4 +131,10 @@ public final class HtmlFile extends WrapFile {
         super.close();
     }
 
+    public void finalize() throws Throwable {
+        if( ! isClosed )
+            close();
+        super.finalize();
+    }
+
 }
