@@ -33,10 +33,7 @@ package fr.cea.ig.grools.svg;
  * knowledge of the CeCILL license and that you accept its terms.
  */
 
-import lombok.NonNull;
-import org.slf4j.LoggerFactory;
 import ch.qos.logback.classic.Logger;
-
 import fr.cea.ig.grools.common.Command;
 import fr.cea.ig.grools.common.ResourceExporter;
 import fr.cea.ig.grools.common.WrapFile;
@@ -46,6 +43,8 @@ import fr.cea.ig.grools.fact.PriorKnowledge;
 import fr.cea.ig.grools.fact.Relation;
 import fr.cea.ig.grools.logic.TruthValue;
 import fr.cea.ig.grools.logic.TruthValuePowerSet;
+import lombok.NonNull;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -126,6 +125,9 @@ public final class GraphWriter {
     private static String priorKnowledgeToHTML( @NonNull final PriorKnowledge pk){
         return String.format( "%s<br>Description: %s<br>is dispensable: %s<br>Prediction: %s<br>Expectation: %s<br>Conclusion: %s", pk.getName(), pk.getDescription().replaceAll("\'","&quote;"), pk.getIsDispensable()? "Yes":"No", pk.getPrediction(), pk.getExpectation(), pk.getConclusion() );
     }
+    private static String observationToHTML( @NonNull final Observation observation){
+        return String.format( "%s<br>Description: %s<br>type: %s<br>Truth value: %s", observation.getName(), observation.getDescription().replaceAll("\'","&quote;"), observation.getType(), observation.getTruthValue() );
+    }
 
     private static boolean addNode( final Concept concept, final String id, final DotFile dotFile){
         boolean status = false;
@@ -142,6 +144,40 @@ public final class GraphWriter {
         return status;
     }
 
+    private static String underscoretify(@NonNull final String str){
+        return str.replace(" ", "_").replaceAll("[\\s.\\-,.:/!$]", "_");
+    }
+
+    private static void writeJSInfo( @NonNull final JsFile jsFile, @NonNull final Concept concept, @NonNull final String graphName) throws IOException {
+            String          color;
+            if( concept instanceof PriorKnowledge ) {
+                final PriorKnowledge priorKnowledge = (PriorKnowledge) concept;
+                switch (priorKnowledge.getConclusion()) {
+                    case CONFIRMED_ABSENCE:
+                    case CONFIRMED_PRESENCE:
+                        color = "Chartreuse";
+                        break;
+                    case UNCONFIRMED_PRESENCE:
+                    case UNCONFIRMED_ABSENCE:
+                        color = "White";
+                        break;
+                    default:
+                        color = "LightPink";
+                        break;
+                }
+                final String name = underscoretify( concept.getName() );
+                jsFile.writeln(String.format("    const svg_%s = svgdoc_%s.getElementById('%s');", name, graphName, name ));
+                jsFile.writeln(String.format("    tooltips_event(tooltipsId, svg_%s, createInformativeNode('%s', '%s') );", name, priorKnowledgeToHTML(priorKnowledge), color));
+            }
+            else if( concept instanceof Observation ){
+                final Observation observation = (Observation)concept;
+                color = "White";
+                final String name = underscoretify( concept.getName() );
+                jsFile.writeln(String.format("    const svg_%s = svgdoc_%s.getElementById('%s');", name, graphName, name ));
+                jsFile.writeln(String.format("    tooltips_event(tooltipsId, svg_%s, createInformativeNode('%s', '%s') );", name, observationToHTML(observation), color));
+            }
+    }
+
     private String writeDotFile(final String graphName, final Set<Relation> relations ) throws Exception {
         final String    dotFilename = Paths.get(outputDir, graphName, graphName + ".dot").toString();
         final DotFile   dotFile     = new DotFile(graphName, dotFilename);
@@ -149,14 +185,14 @@ public final class GraphWriter {
         for( final Relation relation : relations){
             final Concept source    = relation.getSource();
             final Concept target    = relation.getTarget();
-            final String  sourceId  = source.getName().replaceAll( "[\\s.\\-/]", "_" );
-            final String  targetId  = target.getName().replaceAll( "[\\s.\\-/]", "_" );
+            final String  sourceId  = underscoretify( source.getName() );
+            final String  targetId  = underscoretify( target.getName() );
             if( !addNode( source, sourceId, dotFile ) ){
-                System.err.println( "Unexpected type: " + source.getClass() );
+                LOG.warn( "Unexpected type: " + source.getClass() );
                 continue;
             }
             if( !addNode( target, targetId, dotFile ) ){
-                System.err.println( "Unexpected type: " + source.getClass() );
+                LOG.warn( "Unexpected type: " + source.getClass() );
                 continue;
             }
             dotFile.linkNode( sourceId, targetId, relation.getType().toString() );
@@ -175,7 +211,6 @@ public final class GraphWriter {
     private String writeJsFile( final String graphName, final Set<Relation> relations ) throws IOException {
         final String    jsFilename  = Paths.get(outputDir, graphName, "js", graphName + ".js").toString();
         final JsFile    jsFile      = new JsFile(jsFilename);
-        String          color;
         jsFile.writeln(String.format("    const object_svg_%s   = document.getElementById('%s');", graphName, graphName));
         jsFile.writeln(String.format("    const svgdoc_%s       = object_svg_%s.contentDocument;", graphName, graphName));
         jsFile.writeln(              "    const tooltips        = document.createElement('div');");
@@ -183,25 +218,13 @@ public final class GraphWriter {
         jsFile.writeln(              "    tooltips.className    = 'grools';");
         jsFile.writeln(              "    document.body.appendChild(tooltips);");
         jsFile.writeln(              "    const tooltipsId    = document.getElementById('tooltips-content');");
-        final Set<PriorKnowledge> pks = new HashSet<>(  );
-        for(final Relation relation : relations ){
-            if( relation.getSource() instanceof PriorKnowledge )
-                pks.add( ( PriorKnowledge ) relation.getSource() );
-            if( relation.getTarget() instanceof PriorKnowledge )
-                pks.add( ( PriorKnowledge ) relation.getTarget() );
+        Set<Concept> concepts = new HashSet<>(relations.size()*2);
+        for( final Relation relation : relations){
+            concepts.add(relation.getSource());
+            concepts.add(relation.getTarget());
         }
-        for( final PriorKnowledge knowledge : pks){
-            final String name = knowledge.getName().replace(" ", "_");
-            jsFile.writeln(String.format("    const svg_%s = svgdoc_%s.getElementById('%s');", name, graphName, name ));
-            switch (knowledge.getConclusion()){
-                case CONFIRMED_ABSENCE:
-                case CONFIRMED_PRESENCE:    color = "Chartreuse"; break;
-                case UNCONFIRMED_PRESENCE:
-                case UNCONFIRMED_ABSENCE:   color = "White"; break;
-                default:                    color = "LightPink"; break;
-            }
-            jsFile.writeln(String.format("    tooltips_event(tooltipsId, svg_%s, createInformativeNode('%s', '%s') );", name, priorKnowledgeToHTML( knowledge ), color) );
-        }
+        for( final Concept concept : concepts)
+            writeJSInfo( jsFile, concept, graphName );
         jsFile.close();
         return jsFilename;
     }
