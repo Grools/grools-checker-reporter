@@ -88,8 +88,12 @@ public final class DotFile extends WrapFile {
     }
 
     public void addNode( final String uniqueNodeName, final String color, final String shape ){
+        final String label  = uniqueNodeName.replace('_', ' ');
+        addNode(uniqueNodeName, label,color, shape);
+    }
+
+    public void addNode( final String uniqueNodeName, final String label, final String color, final String shape ){
         try {
-            final String label  = uniqueNodeName.replace('_', ' ');
             if( shape.isEmpty())
                 writeln(String.format("  %s [ id=\"%s\" label=\"%s\" fillcolor=\"%s\" ];", uniqueNodeName, uniqueNodeName, label, color));
             else

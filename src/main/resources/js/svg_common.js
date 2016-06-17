@@ -18,7 +18,7 @@ function createInformativeNode( text, color ){
   var div = document.createElement('div');
   var p   = document.createElement('p');
   p.style.color = color;
-  p.textContent = text;
+  p.innerHTML   = text;
   div.appendChild( p );
   return div;
 }

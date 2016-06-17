@@ -33,7 +33,8 @@ package fr.cea.ig.grools.svg;
  * knowledge of the CeCILL license and that you accept its terms.
  */
 
-
+import lombok.NonNull;
+import org.slf4j.LoggerFactory;
 import ch.qos.logback.classic.Logger;
 
 import fr.cea.ig.grools.common.Command;
@@ -45,7 +46,6 @@ import fr.cea.ig.grools.fact.PriorKnowledge;
 import fr.cea.ig.grools.fact.Relation;
 import fr.cea.ig.grools.logic.TruthValue;
 import fr.cea.ig.grools.logic.TruthValuePowerSet;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -72,10 +72,10 @@ public final class GraphWriter {
     protected boolean isClosed;
 
     private static String colorList( final PriorKnowledge pk){
-        return toColor( pk.getPrediction() ) + ";0.5:" + toColor( pk.getExpectation() );
+        return toColorPred( pk.getPrediction() ) + ";0.5:" + toColorExp( pk.getExpectation() );
     }
 
-    private static String toColor( final TruthValuePowerSet tvSet ){
+    private static String toColorPred( final TruthValuePowerSet tvSet ){
         String color;
         switch ( tvSet ){
             case T: color = "Lime"; break;
@@ -99,6 +99,34 @@ public final class GraphWriter {
         return color;
     }
 
+    private static String toColorExp( final TruthValuePowerSet tvSet ){
+        String color;
+        switch ( tvSet ){
+            case NT:
+            case T: color = "Lime"; break;
+            case TF:
+            case TFB:
+            case NTF:
+            case NTFB:
+            case NF:
+            case FB:
+            case NFB:
+            case F: color = "Coral"; break;
+            case NB:
+            case NTB:
+            case TB:
+            case B: color = "Plum"; break;
+            case n:
+            case N:
+            default: color = "white";
+        }
+        return color;
+    }
+
+    private static String priorKnowledgeToHTML( @NonNull final PriorKnowledge pk){
+        return String.format( "%s<br>Description: %s<br>is dispensable: %s<br>Prediction: %s<br>Expectation: %s<br>Conclusion: %s", pk.getName(), pk.getDescription(), pk.getIsDispensable()? "Yes":"No", pk.getPrediction(), pk.getExpectation(), pk.getConclusion() );
+    }
+
     private static boolean addNode( final Concept concept, final String id, final DotFile dotFile){
         boolean status = false;
         if( concept instanceof PriorKnowledge ) {
@@ -108,7 +136,7 @@ public final class GraphWriter {
         }
         else if( concept instanceof Observation ) {
             final Observation o = (Observation ) concept;
-            dotFile.addNode( id, (o.getTruthValue() == TruthValue.t)? "Lime":"Coral" , "oval" );
+            dotFile.addNode( id, o.getLabel(), (o.getTruthValue() == TruthValue.t)? "Lime":"Coral" , "oval" );
             status = true;
         }
         return status;
@@ -167,12 +195,12 @@ public final class GraphWriter {
             jsFile.writeln(String.format("    const svg_%s = svgdoc_%s.getElementById('%s');", name, graphName, name ));
             switch (knowledge.getConclusion()){
                 case CONFIRMED_ABSENCE:
-                case CONFIRMED_PRESENCE:    color = "green"; break;
+                case CONFIRMED_PRESENCE:    color = "Chartreuse"; break;
                 case UNCONFIRMED_PRESENCE:
-                case UNCONFIRMED_ABSENCE:   color = "Chartreuse"; break;
+                case UNCONFIRMED_ABSENCE:   color = "White"; break;
                 default:                    color = "LightPink"; break;
             }
-            jsFile.writeln(String.format("    tooltips_event(tooltipsId, svg_%s, createInformativeNode('%s', '%s') );", name, knowledge.getConclusion(), color) );
+            jsFile.writeln(String.format("    tooltips_event(tooltipsId, svg_%s, createInformativeNode('%s', '%s') );", name, priorKnowledgeToHTML( knowledge ), color) );
         }
         jsFile.close();
         return jsFilename;
@@ -227,17 +255,19 @@ public final class GraphWriter {
 
         htmlFile.addGraph(graphName, graphName+".svg");
         htmlFile.close();
+        final int colonIndex = priorKnowledge.getDescription().indexOf(':');
+        final String description = (colonIndex >= 0) ? priorKnowledge.getDescription().substring(0, colonIndex):"";
 
         final String url = "<a href=\""+Paths.get(graphName,"result.html").toString()+"\">"+graphName+"</a>";
         htmlIndex.writeln( "            <tr>" );
         htmlIndex.writeln( "                <td>" + url                             + "</td>" );
-        htmlIndex.writeln( "                <td>" + priorKnowledge.getDescription() + "</td>" );
+        htmlIndex.writeln( "                <td>" + description                     + "</td>" );
         htmlIndex.writeln( "                <td>" + priorKnowledge.getPrediction()  + "</td>" );
         htmlIndex.writeln( "                <td>" + priorKnowledge.getExpectation() + "</td>" );
         htmlIndex.writeln( "            </tr>" );
 
-        LOG.info("File copied " + jsFilename );
-        LOG.info("File copied " + dotFilename );
+        LOG.trace("File copied " + jsFilename );
+        LOG.trace("File copied " + dotFilename );
     }
 
     public void finalize() throws Throwable {
