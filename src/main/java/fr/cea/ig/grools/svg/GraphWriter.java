@@ -138,7 +138,7 @@ public final class GraphWriter {
         }
         else if( concept instanceof Observation ) {
             final Observation o = (Observation ) concept;
-            dotFile.addNode( id, o.getLabel(), (o.getTruthValue() == TruthValue.t)? "Lime":"Coral" , "oval" );
+            dotFile.addNode( id, o.getName(), (o.getTruthValue() == TruthValue.t)? "Lime":"Coral" , "oval" );
             status = true;
         }
         return status;
