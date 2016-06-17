@@ -124,7 +124,7 @@ public final class GraphWriter {
     }
 
     private static String priorKnowledgeToHTML( @NonNull final PriorKnowledge pk){
-        return String.format( "%s<br>Description: %s<br>is dispensable: %s<br>Prediction: %s<br>Expectation: %s<br>Conclusion: %s", pk.getName(), pk.getDescription(), pk.getIsDispensable()? "Yes":"No", pk.getPrediction(), pk.getExpectation(), pk.getConclusion() );
+        return String.format( "%s<br>Description: %s<br>is dispensable: %s<br>Prediction: %s<br>Expectation: %s<br>Conclusion: %s", pk.getName(), pk.getDescription().replaceAll("\'","&quote;"), pk.getIsDispensable()? "Yes":"No", pk.getPrediction(), pk.getExpectation(), pk.getConclusion() );
     }
 
     private static boolean addNode( final Concept concept, final String id, final DotFile dotFile){
