@@ -167,14 +167,14 @@ public final class GraphWriter {
                 }
                 final String name = underscoretify( concept.getName() );
                 jsFile.writeln(String.format("    const svg_%s = svgdoc_%s.getElementById('%s');", name, graphName, name ));
-                jsFile.writeln(String.format("    tooltips_event(tooltipsId, svg_%s, createInformativeNode('%s', '%s') );", name, priorKnowledgeToHTML(priorKnowledge), color));
+                jsFile.writeln(String.format("    tooltips_event( svg_%s, createInformativeNode('%s', '%s') );", name, priorKnowledgeToHTML(priorKnowledge), color));
             }
             else if( concept instanceof Observation ){
                 final Observation observation = (Observation)concept;
                 color = "White";
                 final String name = underscoretify( concept.getName() );
                 jsFile.writeln(String.format("    const svg_%s = svgdoc_%s.getElementById('%s');", name, graphName, name ));
-                jsFile.writeln(String.format("    tooltips_event(tooltipsId, svg_%s, createInformativeNode('%s', '%s') );", name, observationToHTML(observation), color));
+                jsFile.writeln(String.format("    tooltips_event( svg_%s, createInformativeNode('%s', '%s') );", name, observationToHTML(observation), color));
             }
     }
 
@@ -213,11 +213,6 @@ public final class GraphWriter {
         final JsFile    jsFile      = new JsFile(jsFilename);
         jsFile.writeln(String.format("    const object_svg_%s   = document.getElementById('%s');", graphName, graphName));
         jsFile.writeln(String.format("    const svgdoc_%s       = object_svg_%s.contentDocument;", graphName, graphName));
-        jsFile.writeln(              "    const tooltips        = document.createElement('div');");
-        jsFile.writeln(              "    tooltips.id           = 'tooltips-content';");
-        jsFile.writeln(              "    tooltips.className    = 'grools';");
-        jsFile.writeln(              "    document.body.appendChild(tooltips);");
-        jsFile.writeln(              "    const tooltipsId     = document.getElementById('tooltips-content');");
         Set<Concept> concepts = new HashSet<>(relations.size()*2);
         for( final Relation relation : relations){
             concepts.add(relation.getSource());

@@ -1,16 +1,58 @@
-function tooltips_event( tooltips, id, node ){
-  id.addEventListener( "mouseenter",  function( event ) {
-    tooltips.appendChild( node );
-    tooltipsPosition( event, tooltips );;
-    tooltips.style.display = 'block';
-    
-  } );
-  id.addEventListener( "mouseleave",  function( event ) {
+function hasClass(el, className) {
+  if (el.classList)
+    return el.classList.contains(className)
+  else
+    return !!el.className.match(new RegExp('(\\s|^)' + className + '(\\s|$)'))
+}
+
+function addClass(el, className) {
+  if (el.classList)
+    el.classList.add(className)
+  else if (!hasClass(el, className)) el.className += " " + className
+}
+
+function removeClass(el, className) {
+  if (el.classList)
+    el.classList.remove(className)
+  else if (hasClass(el, className)) {
+    var reg = new RegExp('(\\s|^)' + className + '(\\s|$)')
+    el.className=el.className.replace(reg, ' ')
+  }
+}
+
+function tooltips_event( node, content ){
+
+    const tooltips        = document.createElement('div');
+    tooltips.id           = 'tooltips-'+node.id;
+    tooltips.className    = 'grools';
+    document.body.appendChild(tooltips);
+    tooltips.appendChild( content );
     tooltips.style.display = 'none';
-    tooltips.removeChild(tooltips.firstChild);
+
+  node.addEventListener( "mouseenter",  function( event ) {
+    if( ! hasClass(tooltips, "NotClosable" ) ){
+      tooltipsPosition( event, tooltips );
+      tooltips.style.display = 'block';
+    }
   } );
-  id.addEventListener( "mousemove",  function( event ) {
-    tooltipsPosition( event, tooltips );
+  node.addEventListener( "mouseleave",  function( event ) {
+    if( ! hasClass(tooltips, "NotClosable" ) ){
+      tooltips.style.display = 'none';
+    }
+  } );
+  node.addEventListener( "mousemove",  function( event ) {
+    if( ! hasClass(tooltips, "NotClosable" ) )
+      tooltipsPosition( event, tooltips );
+  } );
+  node.addEventListener( "click",  function( event ) {
+    if( hasClass(tooltips, "NotClosable" ) ){
+      tooltips.style.display = 'none';
+      removeClass(tooltips, "NotClosable" );
+    }
+    else{
+      tooltips.style.display = 'block';
+      addClass(tooltips, "NotClosable" );
+    }
   } );
 }
 

@@ -50,7 +50,7 @@ import java.io.*;
 public final class JsFile extends WrapFile {
 
     private void init() throws IOException {
-        writeln("window.addEventListener('load',function(){");
+        writeln("window.onload=function() {");
     }
 
     public JsFile(final String filepath) throws IOException {
@@ -64,7 +64,7 @@ public final class JsFile extends WrapFile {
     }
 
     public void close() throws IOException {
-        writeln("},false);");
+        writeln("};");
         super.close();
     }
 
