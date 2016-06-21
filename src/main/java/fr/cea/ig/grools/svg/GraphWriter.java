@@ -217,7 +217,7 @@ public final class GraphWriter {
         jsFile.writeln(              "    tooltips.id           = 'tooltips-content';");
         jsFile.writeln(              "    tooltips.className    = 'grools';");
         jsFile.writeln(              "    document.body.appendChild(tooltips);");
-        jsFile.writeln(              "    const tooltipsId    = document.getElementById('tooltips-content');");
+        jsFile.writeln(              "    const tooltipsId     = document.getElementById('tooltips-content');");
         Set<Concept> concepts = new HashSet<>(relations.size()*2);
         for( final Relation relation : relations){
             concepts.add(relation.getSource());
@@ -264,7 +264,7 @@ public final class GraphWriter {
         htmlIndex.writeln( "                <th>Expectation</th>" );
         htmlIndex.writeln( "            </tr>" );
         String jsPath3 = ResourceExporter.export("/js/svg_common.js", outputDir);
-        LOG.info("File copied " + jsPath3 );
+        LOG.debug("File copied " + jsPath3 );
     }
 
     public void addGraph( final PriorKnowledge priorKnowledge, Set<Relation> relations) throws Exception {
@@ -289,8 +289,8 @@ public final class GraphWriter {
         htmlIndex.writeln( "                <td>" + priorKnowledge.getExpectation() + "</td>" );
         htmlIndex.writeln( "            </tr>" );
 
-        LOG.trace("File copied " + jsFilename );
-        LOG.trace("File copied " + dotFilename );
+        LOG.debug("File copied " + jsFilename );
+        LOG.debug("File copied " + dotFilename );
     }
 
     public void finalize() throws Throwable {

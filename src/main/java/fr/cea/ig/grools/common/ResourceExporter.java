@@ -72,7 +72,7 @@ public class ResourceExporter {
         final String outputFile     = file.getAbsolutePath();
         final boolean isCreated    = file.getParentFile().mkdirs();
         if( ! isCreated )
-            LOG.info("Directory " + file.getParentFile() + "exists already");
+            LOG.trace("Directory " + file.getParentFile() + "exists already");
 
         try {
             stream = ResourceExporter.class.getResourceAsStream(resourceName);
