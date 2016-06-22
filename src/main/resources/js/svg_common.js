@@ -28,23 +28,43 @@ function tooltips_event( node, content ){
     document.body.appendChild(tooltips);
     tooltips.appendChild( content );
     tooltips.style.display = 'none';
+    var isSelected = false;
+
+    tooltips.addEventListener( "mousedown",  function( event ) {
+      event = event || window.event;
+      isSelected = true;
+    } );
+
+    tooltips.addEventListener( "mousemove",  function( event ) {
+      event = event || window.event;
+      if( isSelected )
+        tooltipsPosition( event, tooltips, -30, 30 );
+    }, true );
+    tooltips.addEventListener( "mouseup",  function( event ) {
+      event = event || window.event;
+      isSelected = false;
+    }, true );
 
   node.addEventListener( "mouseenter",  function( event ) {
-    if( ! hasClass(tooltips, "NotClosable" ) ){
-      tooltipsPosition( event, tooltips );
+    event = event || window.event;
+    if( ! hasClass(tooltips, "NotClosable" ) && !isSelected ){
+      tooltipsPosition( event, tooltips, 40, 30 );
       tooltips.style.display = 'block';
     }
   } );
   node.addEventListener( "mouseleave",  function( event ) {
-    if( ! hasClass(tooltips, "NotClosable" ) ){
+    event = event || window.event;
+    if( ! hasClass(tooltips, "NotClosable" ) && !isSelected ){
       tooltips.style.display = 'none';
     }
   } );
   node.addEventListener( "mousemove",  function( event ) {
-    if( ! hasClass(tooltips, "NotClosable" ) )
-      tooltipsPosition( event, tooltips );
+    event = event || window.event;
+    if( ! hasClass(tooltips, "NotClosable" ) && !isSelected )
+      tooltipsPosition( event, tooltips, 40, 30 );
   } );
   node.addEventListener( "click",  function( event ) {
+    event = event || window.event;
     if( hasClass(tooltips, "NotClosable" ) ){
       tooltips.style.display = 'none';
       removeClass(tooltips, "NotClosable" );
@@ -52,21 +72,20 @@ function tooltips_event( node, content ){
     else{
       tooltips.style.display = 'block';
       addClass(tooltips, "NotClosable" );
+      tooltipsPosition( event, tooltips, 40, 30 );
     }
   } );
 }
 
 function createInformativeNode( text, color ){
-  var div = document.createElement('div');
   var p   = document.createElement('p');
   p.style.color = color;
   p.innerHTML   = text;
-  div.appendChild( p );
-  return div;
+  return p;
 }
 
 
-function tooltipsPosition( event, tooltips ){
-  tooltips.style.top = (event.pageY + 40 - window.scrollY)+"px";
-  tooltips.style.left= (event.pageX - 30 - window.scrollX)+"px";
+function tooltipsPosition( event, tooltips, ySshift, xShift ){
+  tooltips.style.top = (event.pageY + ySshift - window.scrollY)+"px";
+  tooltips.style.left= (event.pageX - xShift  - window.scrollX)+"px";
 }
