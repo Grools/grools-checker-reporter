@@ -20,27 +20,22 @@ function removeClass(el, className) {
   }
 }
 
-function tooltips_event( node, content ){
-
-    const tooltips        = document.createElement('div');
-    tooltips.id           = 'tooltips-'+node.id;
-    tooltips.className    = 'grools';
-    document.body.appendChild(tooltips);
-    tooltips.appendChild( content );
-    tooltips.style.display = 'none';
+function tooltips_event( node, description, color ){
+    const tooltips = createInformativeNode(node, description, color );
     var isSelected = false;
+    document.body.appendChild(tooltips)
 
-    tooltips.addEventListener( "mousedown",  function( event ) {
+    tooltips.firstChild.addEventListener( "mousedown",  function( event ) {
       event = event || window.event;
       isSelected = true;
     } );
 
-    tooltips.addEventListener( "mousemove",  function( event ) {
+    tooltips.firstChild.addEventListener( "mousemove",  function( event ) {
       event = event || window.event;
       if( isSelected )
-        tooltipsPosition( event, tooltips, -30, 30 );
+        tooltipsPosition( event, tooltips, -20, tooltips.offsetWidth * .3 );
     }, true );
-    tooltips.addEventListener( "mouseup",  function( event ) {
+    tooltips.firstChild.addEventListener( "mouseup",  function( event ) {
       event = event || window.event;
       isSelected = false;
     }, true );
@@ -77,11 +72,19 @@ function tooltips_event( node, content ){
   } );
 }
 
-function createInformativeNode( text, color ){
-  var p   = document.createElement('p');
-  p.style.color = color;
-  p.innerHTML   = text;
-  return p;
+function createInformativeNode( node, text, color ){
+  var tooltips          = document.createElement('div');
+  var taker             = document.createElement('div');
+  var p                 = document.createElement('p');
+  taker.style.height    = '2em';
+  tooltips.appendChild( taker );
+  tooltips.id           = 'tooltips-'+node.id;
+  tooltips.className    = 'grools';
+  tooltips.style.display= 'none';
+  p.style.color         = color;
+  p.innerHTML           = text;
+  tooltips.appendChild( p );
+  return tooltips;
 }
 
 

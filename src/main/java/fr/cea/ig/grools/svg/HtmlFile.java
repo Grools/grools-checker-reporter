@@ -70,12 +70,12 @@ public final class HtmlFile extends WrapFile {
         writeln("                border-radius: 2em;");
         writeln("                content: '';");
         writeln("                background-image: linear-gradient(to bottom, #1a82f7 0%, #3a4ed5 20%);");
-        writeln("                padding: 1em;");
         writeln("                position:absolute;");
         writeln("                z-index:-1;");
         writeln("           }");
         writeln("            .grools p{");
-        writeln("                padding:1em;");
+        writeln("                padding-left:1em;");
+        writeln("                padding-bottom:1em;");
         writeln("            }");
         writeln("        </style>");
         writeln("        <script type='text/javascript' src='../js/svg_common.js'></script>");

@@ -167,14 +167,14 @@ public final class GraphWriter {
                 }
                 final String name = underscoretify( concept.getName() );
                 jsFile.writeln(String.format("    const svg_%s = svgdoc_%s.getElementById('%s');", name, graphName, name ));
-                jsFile.writeln(String.format("    tooltips_event( svg_%s, createInformativeNode('%s', '%s') );", name, priorKnowledgeToHTML(priorKnowledge), color));
+                jsFile.writeln(String.format("    tooltips_event( svg_%s, '%s', '%s' );", name, priorKnowledgeToHTML(priorKnowledge), color));
             }
             else if( concept instanceof Observation ){
                 final Observation observation = (Observation)concept;
                 color = "White";
                 final String name = underscoretify( concept.getName() );
                 jsFile.writeln(String.format("    const svg_%s = svgdoc_%s.getElementById('%s');", name, graphName, name ));
-                jsFile.writeln(String.format("    tooltips_event( svg_%s, createInformativeNode('%s', '%s') );", name, observationToHTML(observation), color));
+                jsFile.writeln(String.format("    tooltips_event( svg_%s, '%s', '%s' );", name, observationToHTML(observation), color));
             }
     }
 
