@@ -145,7 +145,8 @@ public final class GraphWriter {
     }
 
     private static String underscoretify(@NonNull final String str){
-        return str.replace(" ", "_").replaceAll("[\\s.\\-,.:/!$]", "_");
+        return str.replaceAll("[\\s.+\\-,.:/!$()\\[\\]]", "_")
+                  .replaceAll("(_)(\\1{2,})", "$1");
     }
 
     private static void writeJSInfo( @NonNull final JsFile jsFile, @NonNull final Concept concept, @NonNull final String graphName) throws IOException {
