@@ -45,11 +45,11 @@ import java.util.Map;
  */
 /*
  * @startuml
- * class JsFile{
+ * class GraphicReport{
  * }
  * @enduml
  */
-public final class HtmlFile extends WrapFile {
+public final class GraphicReport extends WrapFile {
     private final Map<String, String> svgs= new HashMap<>() ;
 
     private void init() throws IOException{
@@ -81,12 +81,12 @@ public final class HtmlFile extends WrapFile {
         writeln("        <script type='text/javascript' src='../js/svg_common.js'></script>");
     }
 
-    public HtmlFile(final String filepath) throws IOException {
+    public GraphicReport(final String filepath) throws IOException {
         super(new File(filepath));
         init();
     }
 
-    public HtmlFile(final File file) throws IOException {
+    public GraphicReport(final File file) throws IOException {
         super(file);
         init();
     }

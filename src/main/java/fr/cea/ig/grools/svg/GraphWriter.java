@@ -35,8 +35,6 @@ package fr.cea.ig.grools.svg;
 
 import ch.qos.logback.classic.Logger;
 import fr.cea.ig.grools.common.Command;
-import fr.cea.ig.grools.common.ResourceExporter;
-import fr.cea.ig.grools.common.WrapFile;
 import fr.cea.ig.grools.fact.Concept;
 import fr.cea.ig.grools.fact.Observation;
 import fr.cea.ig.grools.fact.PriorKnowledge;
@@ -48,6 +46,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -66,9 +65,8 @@ import java.util.Set;
  */
 public final class GraphWriter {
     private static final Logger LOG = (Logger) LoggerFactory.getLogger(GraphWriter.class);
-    private final String    outputDir;
-    private final WrapFile  htmlIndex;
-    protected boolean isClosed;
+    private final String        outputDir;
+    private final TableReport tableReport;
 
     private static String colorList( final PriorKnowledge pk){
         return toColorPred( pk.getPrediction() ) + ";0.5:" + toColorExp( pk.getExpectation() );
@@ -179,6 +177,7 @@ public final class GraphWriter {
             }
     }
 
+
     private String writeDotFile(final String graphName, final Set<Relation> relations ) throws Exception {
         final String    dotFilename = Paths.get(outputDir, graphName, graphName + ".dot").toString();
         final DotFile   dotFile     = new DotFile(graphName, dotFilename);
@@ -225,42 +224,25 @@ public final class GraphWriter {
         return jsFilename;
     }
 
+    private String writeReportTable( @NonNull final Path path, @NonNull final Set<Relation> relations) throws Exception {
+        TableReport table = new TableReport(path.toFile());
+        final Set<PriorKnowledge> priorKnowledges = new HashSet<>(relations.size()*2);
+        for( final Relation relation : relations){
+            if( relation.getSource() instanceof PriorKnowledge)
+                priorKnowledges.add((PriorKnowledge)relation.getSource());
+            if( relation.getTarget() instanceof PriorKnowledge)
+                priorKnowledges.add((PriorKnowledge)relation.getTarget());
+        }
+        for( final PriorKnowledge pk : priorKnowledges ){
+            table.addRow(pk);
+        }
+        table.close();
+        return table.getFileName();
+    }
+
     public GraphWriter(final String outDir ) throws Exception{
-        isClosed    = false;
         outputDir   = outDir;
-        htmlIndex   = new WrapFile( Paths.get( outputDir, "index.html").toFile() );
-        htmlIndex.writeln("<!DOCTYPE html>");
-        htmlIndex.writeln("<html>");
-        htmlIndex.writeln("    <head>");
-        htmlIndex.writeln("        <title>Reporting</title>");
-        htmlIndex.writeln("        <meta charset=\"utf-8\">");
-        htmlIndex.writeln("        <style type='text/css'>");
-        htmlIndex.writeln("            table, th, td {");
-        htmlIndex.writeln("                border: 1px solid black;");
-        htmlIndex.writeln("            }");
-        htmlIndex.writeln("            #results                                     { width:100%;}");
-        htmlIndex.writeln("            #results td                                  { padding: 5px 5px 5px 5px;}");
-        htmlIndex.writeln("            #results tr > td:first-child                 { text-align:left;}");
-        htmlIndex.writeln("            #results tr > td:first-child + td            { text-align:justify;}");
-        htmlIndex.writeln("            #results tr > td:first-child + td + td       { text-align:center;}");
-        htmlIndex.writeln("            #results tr > td:first-child + td + td + td  { text-align:center;}");
-        htmlIndex.writeln("        </style>");
-        htmlIndex.writeln("    </head>");
-        htmlIndex.writeln( "    </head>" );
-        htmlIndex.writeln( "    <body>" );
-        htmlIndex.writeln( "        <table id=\"results\">" );
-        htmlIndex.writeln( "            <col width=\"20%\">" );
-        htmlIndex.writeln( "            <col width=\"60%\">" );
-        htmlIndex.writeln( "            <col width=\"10%\">" );
-        htmlIndex.writeln( "            <col width=\"10%\">" );
-        htmlIndex.writeln( "            <tr>" );
-        htmlIndex.writeln( "                <th>Concept</th>" );
-        htmlIndex.writeln( "                <th>Description</th>" );
-        htmlIndex.writeln( "                <th>Prediction</th>" );
-        htmlIndex.writeln( "                <th>Expectation</th>" );
-        htmlIndex.writeln( "            </tr>" );
-        String jsPath3 = ResourceExporter.export("/js/svg_common.js", outputDir);
-        LOG.debug("File copied " + jsPath3 );
+        tableReport = new TableReport(Paths.get(outputDir, "index.html").toFile() );
     }
 
     public void addGraph( final PriorKnowledge priorKnowledge, Set<Relation> relations) throws Exception {
@@ -268,39 +250,31 @@ public final class GraphWriter {
 
         final File      outDir      = Paths.get( outputDir, graphName).toFile();
         outDir.mkdirs();
-        final HtmlFile  htmlFile    = new HtmlFile(Paths.get(outputDir,graphName,"result.html").toString());
+        final GraphicReport graphicReport = new GraphicReport(Paths.get(outputDir, graphName, "result_svg.html").toString());
         final String    dotFilename = writeDotFile( graphName, relations );
         final String    jsFilename  = writeJsFile( graphName, relations );
+        final String    rpFilename  = writeReportTable( Paths.get(outputDir, graphName, "result_table.html"), relations );
 
-        htmlFile.addGraph(graphName, graphName+".svg");
-        htmlFile.close();
-        final int colonIndex = priorKnowledge.getDescription().indexOf(':');
-        final String description = (colonIndex >= 0) ? priorKnowledge.getDescription().substring(0, colonIndex):"";
-
-        final String url = "<a href=\""+Paths.get(graphName,"result.html").toString()+"\">"+graphName+"</a>";
-        htmlIndex.writeln( "            <tr>" );
-        htmlIndex.writeln( "                <td>" + url                             + "</td>" );
-        htmlIndex.writeln( "                <td>" + description                     + "</td>" );
-        htmlIndex.writeln( "                <td>" + priorKnowledge.getPrediction()  + "</td>" );
-        htmlIndex.writeln( "                <td>" + priorKnowledge.getExpectation() + "</td>" );
-        htmlIndex.writeln( "            </tr>" );
-
+        graphicReport.addGraph(graphName, graphName+".svg");
+        graphicReport.close();
+        final String url = graphName+" <a href=\""+Paths.get(graphName,"result_svg.html").toString()+"\">SVG</a>"+" <a href=\""+Paths.get(graphName,"result_table.html").toString()+"\">Table</a>";
+        final int       colonIndex  = priorKnowledge.getDescription().indexOf(':');
+        final String    description = (colonIndex >= 0) ? priorKnowledge.getDescription().substring(0, colonIndex):"";
+        tableReport.addRow( priorKnowledge, url, description);
         LOG.debug("File copied " + jsFilename );
+        LOG.debug("File copied " + rpFilename );
         LOG.debug("File copied " + dotFilename );
     }
 
-    public void finalize() throws Throwable {
-        if( ! isClosed )
-            close();
-        super.finalize();
+    public void close() throws IOException {
+        tableReport.close();
     }
 
-    public void close() throws IOException{
-        isClosed = true;
-        htmlIndex.writeln( "        </table>" );
-        htmlIndex.writeln( "    </body>" );
-        htmlIndex.writeln("</html>");
-        htmlIndex.close();
+    public void finalize() throws Throwable {
+        if( ! tableReport.isClosed() )
+            tableReport.close();
     }
+
+
 
 }
