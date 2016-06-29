@@ -64,9 +64,11 @@ import java.util.Set;
  * @enduml
  */
 public final class GraphWriter {
-    private static final Logger LOG = (Logger) LoggerFactory.getLogger(GraphWriter.class);
-    private final String        outputDir;
+    private static final Logger LOGGER = (Logger) LoggerFactory.getLogger(GraphWriter.class);
+    private final String      outputDir;
     private final TableReport tableReport;
+    private final CSVReport   csvReport;
+
 
     private static String colorList( final PriorKnowledge pk){
         return toColorPred( pk.getPrediction() ) + ";0.5:" + toColorExp( pk.getExpectation() );
@@ -127,7 +129,7 @@ public final class GraphWriter {
         return String.format( "%s<br>Description: %s<br>type: %s<br>Truth value: %s", observation.getName(), observation.getDescription().replaceAll("\'","&quote;"), observation.getType(), observation.getTruthValue() );
     }
 
-    private static boolean addNode( final Concept concept, final String id, final DotFile dotFile){
+    private static boolean addNode( @NonNull final Concept concept, @NonNull final String id, @NonNull final DotFile dotFile){
         boolean status = false;
         if( concept instanceof PriorKnowledge ) {
             final PriorKnowledge pk = (PriorKnowledge ) concept;
@@ -178,7 +180,7 @@ public final class GraphWriter {
     }
 
 
-    private String writeDotFile(final String graphName, final Set<Relation> relations ) throws Exception {
+    private String writeDotFile( @NonNull final String graphName, @NonNull final Set<Relation> relations ) throws Exception {
         final String    dotFilename = Paths.get(outputDir, graphName, graphName + ".dot").toString();
         final DotFile   dotFile     = new DotFile(graphName, dotFilename);
 
@@ -188,11 +190,11 @@ public final class GraphWriter {
             final String  sourceId  = underscoretify( source.getName() );
             final String  targetId  = underscoretify( target.getName() );
             if( !addNode( source, sourceId, dotFile ) ){
-                LOG.warn( "Unexpected type: " + source.getClass() );
+                LOGGER.warn("Unexpected type: " + source.getClass());
                 continue;
             }
             if( !addNode( target, targetId, dotFile ) ){
-                LOG.warn( "Unexpected type: " + source.getClass() );
+                LOGGER.warn("Unexpected type: " + source.getClass());
                 continue;
             }
             dotFile.linkNode( sourceId, targetId, relation.getType().toString() );
@@ -203,7 +205,7 @@ public final class GraphWriter {
         return dotFilename;
     }
 
-    private void dotToSvg( final String graphName, final DotFile dotFile ) throws Exception {
+    private void dotToSvg( @NonNull final String graphName, @NonNull final DotFile dotFile ) throws Exception {
         final String outFile = Paths.get(outputDir, graphName, graphName + ".svg").toString();
         Command.run("dot", Arrays.asList("-Tsvg", "-o" + outFile, dotFile.getAbsolutePath()));
     }
@@ -224,7 +226,7 @@ public final class GraphWriter {
         return jsFilename;
     }
 
-    private String writeReportTable( @NonNull final Path path, @NonNull final Set<Relation> relations) throws Exception {
+    private String writeTableReport(@NonNull final Path path, @NonNull final Set<Relation> relations) throws Exception {
         TableReport table = new TableReport(path.toFile());
         final Set<PriorKnowledge> priorKnowledges = new HashSet<>(relations.size()*2);
         for( final Relation relation : relations){
@@ -240,12 +242,23 @@ public final class GraphWriter {
         return table.getFileName();
     }
 
-    public GraphWriter(final String outDir ) throws Exception{
-        outputDir   = outDir;
-        tableReport = new TableReport(Paths.get(outputDir, "index.html").toFile() );
+    private String writeCSVReport(@NonNull final Path path, @NonNull final Set<Relation> relations) throws Exception {
+        CSVReport csv = new CSVReport(path.toFile());
+        for( final Relation relation : relations ){
+            csv.addRow( relation.getSource());
+            csv.addRow( relation.getTarget());
+        }
+        csv.close();
+        return csv.getFileName();
     }
 
-    public void addGraph( final PriorKnowledge priorKnowledge, Set<Relation> relations) throws Exception {
+    public GraphWriter( @NonNull final String outDir ) throws Exception{
+        outputDir   = outDir;
+        tableReport = new TableReport(Paths.get(outputDir, "index.html").toFile() );
+        csvReport   = new CSVReport(Paths.get(outputDir, "results.csv").toFile() );
+    }
+
+    public void addGraph( @NonNull final PriorKnowledge priorKnowledge, @NonNull Set<Relation> relations) throws Exception {
         final String graphName   = priorKnowledge.getName().replace( "-", "_" );
 
         final File      outDir      = Paths.get( outputDir, graphName).toFile();
@@ -253,7 +266,8 @@ public final class GraphWriter {
         final GraphicReport graphicReport = new GraphicReport(Paths.get(outputDir, graphName, "result_svg.html").toString());
         final String    dotFilename = writeDotFile( graphName, relations );
         final String    jsFilename  = writeJsFile( graphName, relations );
-        final String    rpFilename  = writeReportTable( Paths.get(outputDir, graphName, "result_table.html"), relations );
+        final String    trFilename  = writeTableReport(Paths.get(outputDir, graphName, "result_table.html"), relations);
+        final String    csvFilename = writeCSVReport(Paths.get(outputDir, graphName, "results.csv"), relations);
 
         graphicReport.addGraph(graphName, graphName+".svg");
         graphicReport.close();
@@ -261,18 +275,23 @@ public final class GraphWriter {
         final int       colonIndex  = priorKnowledge.getDescription().indexOf(':');
         final String    description = (colonIndex >= 0) ? priorKnowledge.getDescription().substring(0, colonIndex):"";
         tableReport.addRow( priorKnowledge, url, description);
-        LOG.debug("File copied " + jsFilename );
-        LOG.debug("File copied " + rpFilename );
-        LOG.debug("File copied " + dotFilename );
+        csvReport.addRow(priorKnowledge);
+        LOGGER.debug("File copied " + jsFilename);
+        LOGGER.debug("File copied " + trFilename);
+        LOGGER.debug("File copied " + csvFilename);
+        LOGGER.debug("File copied " + dotFilename);
     }
 
     public void close() throws IOException {
         tableReport.close();
+        csvReport.close();
     }
 
     public void finalize() throws Throwable {
         if( ! tableReport.isClosed() )
             tableReport.close();
+        if( ! csvReport.isClosed() )
+            csvReport.close();
     }
 
 

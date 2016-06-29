@@ -33,10 +33,12 @@ repositories {
 }
 
 dependencies {
-    testCompile group: 'junit'              , name: 'junit'           , version: '4.11'
-    compile     group: 'javax.validation'   , name: 'validation-api'  , version: '1.1.0.Final'
-    compile     group: 'ch.qos.logback'     , name: 'logback-classic' , version: '1.1.2'
-    compile     group: 'fr.cea.ig'          , name: 'grools-checker'  , version: '3.0.0'
+    testCompile group: 'junit'              , name: 'junit'           , version: junitVersion
+    compile     group: 'ch.qos.logback'     , name: 'logback-classic' , version: logbackVersion
+    compile     group: 'org.projectlombok'  , name: 'lombok'          , version: lombokVersion
+    compile     group: 'ch.qos.logback'     , name: 'logback-classic' , version: logbackVersion
+    compile     group: 'fr.cea.ig'          , name: 'grools-checker'  , version: groolsVersion
+    compile     group: 'org.apache.commons' , name: 'commons-csv'     , version: commonsCSVVersion
 }
 
 jar {

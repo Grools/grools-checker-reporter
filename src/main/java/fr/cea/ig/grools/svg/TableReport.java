@@ -68,7 +68,7 @@ public final class TableReport extends WrapFile {
         writeln("        <title>Reporting</title>");
         writeln("        <meta charset=\"utf-8\">");
         writeln("        <style type='text/css'>");
-        writeln("            table, th, td {");
+        writeln("            td {");
         writeln("                border: 1px solid black;");
         writeln("            }");
         writeln("            #results                                         { width:100%;}");
@@ -150,7 +150,7 @@ public final class TableReport extends WrapFile {
         writeln("        <script type=\"text/javascript\" src=\"js/list.js\"></script>");
         writeln("        <script type=\"text/javascript\">");
         writeln("          window.onload=function() {");
-        writeln("            var options = { valueNames: [ 'Concept', 'Description', 'Prediction', 'Expectation' ] };");
+        writeln("            var options = { valueNames: [ 'Concept', 'Description', 'Prediction', 'Expectation', 'Conclusion' ] };");
         writeln("            var rowList = new List('results', options);");
         writeln("          };");
         writeln("        </script>");
@@ -159,11 +159,13 @@ public final class TableReport extends WrapFile {
         writeln( "        <div id=\"results\">" );
         writeln( "            <span><a href=\"./results.csv\">Get results CSV file</a></span>" );
         writeln( "            <table id=\"resultstable\">" );
-        writeln( "                <col width=\"20%\">" );
-        writeln( "                <col width=\"50%\">" );
-        writeln( "                <col width=\"10%\">" );
-        writeln( "                <col width=\"10%\">" );
-        writeln( "                <col width=\"10%\">" );
+        writeln( "                <colgroup>" );
+        writeln( "                    <col width=\"20%\">" );
+        writeln( "                    <col width=\"50%\">" );
+        writeln( "                    <col width=\"10%\">" );
+        writeln( "                    <col width=\"10%\">" );
+        writeln( "                    <col width=\"10%\">" );
+        writeln( "                </colgroup>" );
         writeln( "                <thead>" );
         writeln( "                <tr>" );
         writeln( "                    <th><span class=\"sort\" data-sort=\"Concept\">Sort by Concept</span></th>" );
