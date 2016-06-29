@@ -168,7 +168,7 @@ public final class TableReport extends WrapFile {
         writeln("    </head>");
         writeln( "    <body>" );
         writeln( "        <div id=\"results\">" );
-        writeln( "            <span><a href=\"./results.csv\">Get results CSV file</a></span>" );
+        writeln( "            <div class=\"button\"><a class=\"button\" href=\"./results.csv\">Get results CSV file</a></span></div>" );
         writeln( "            <table id=\"resultstable\">" );
         writeln( "                <colgroup>" );
         writeln( "                    <col width=\"20%\">" );
