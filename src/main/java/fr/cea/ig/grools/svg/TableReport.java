@@ -146,7 +146,10 @@ public final class TableReport extends WrapFile {
         writeln("              top:-4px;");
         writeln("              right:-5px;");
         writeln("            }");
-        writeln("        a.button {");
+        writeln("        div.button{");
+        writeln("            margin: 20px;");
+        writeln("        }");
+        writeln("        .button a{");
         writeln("            -webkit-appearance: button;");
         writeln("            -moz-appearance: button;");
         writeln("            appearance: button;");
@@ -154,8 +157,8 @@ public final class TableReport extends WrapFile {
         writeln("            color: initial;");
         writeln("            margin-bottom: 10px;");
         writeln("        }");
-        writeln("        div.button{");
-        writeln("            margin: 20px;");
+        writeln("        .button input{");
+        writeln("            margin-right: 100px;");
         writeln("        }");
         writeln("        </style>");
         writeln("        <script type=\"text/javascript\" src=\"js/list.js\"></script>");
@@ -168,7 +171,10 @@ public final class TableReport extends WrapFile {
         writeln("    </head>");
         writeln( "    <body>" );
         writeln( "        <div id=\"results\">" );
-        writeln( "            <div class=\"button\"><a class=\"button\" href=\"./results.csv\">Get results CSV file</a></span></div>" );
+        writeln( "            <div class=\"button\">" );
+        writeln( "                <input class=\"search\" placeholder=\"Search\" />" );
+        writeln( "                <a href=\"./results.csv\">Get results CSV file</a>" );
+        writeln( "            </div>" );
         writeln( "            <table id=\"resultstable\">" );
         writeln( "                <colgroup>" );
         writeln( "                    <col width=\"20%\">" );

@@ -179,6 +179,10 @@ public final class GraphWriter {
             }
     }
 
+    private void dotToSvg( @NonNull final String graphName, @NonNull final DotFile dotFile ) throws Exception {
+        final String outFile = Paths.get(outputDir, graphName, graphName + ".svg").toString();
+        Command.run("dot", Arrays.asList("-Tsvg", "-o" + outFile, dotFile.getAbsolutePath()));
+    }
 
     private String writeDotFile( @NonNull final String graphName, @NonNull final Set<Relation> relations ) throws Exception {
         final String    dotFilename = Paths.get(outputDir, graphName, graphName + ".dot").toString();
@@ -205,11 +209,6 @@ public final class GraphWriter {
         return dotFilename;
     }
 
-    private void dotToSvg( @NonNull final String graphName, @NonNull final DotFile dotFile ) throws Exception {
-        final String outFile = Paths.get(outputDir, graphName, graphName + ".svg").toString();
-        Command.run("dot", Arrays.asList("-Tsvg", "-o" + outFile, dotFile.getAbsolutePath()));
-    }
-
     private String writeJsFile( final String graphName, final Set<Relation> relations ) throws IOException {
         final String    jsFilename  = Paths.get(outputDir, graphName, "js", graphName + ".js").toString();
         final JsFile    jsFile      = new JsFile(jsFilename);
@@ -227,7 +226,7 @@ public final class GraphWriter {
     }
 
     private String writeTableReport(@NonNull final Path path, @NonNull final Set<Relation> relations) throws Exception {
-        TableReport table = new TableReport(path.toFile());
+        final TableReport table = new TableReport(path.toFile());
         final Set<PriorKnowledge> priorKnowledges = new HashSet<>(relations.size()*2);
         for( final Relation relation : relations){
             if( relation.getSource() instanceof PriorKnowledge)
@@ -264,6 +263,8 @@ public final class GraphWriter {
         final File      outDir      = Paths.get( outputDir, graphName).toFile();
         outDir.mkdirs();
         final GraphicReport graphicReport = new GraphicReport(Paths.get(outputDir, graphName, "result_svg.html").toString());
+
+        // TODO reporting could to be faster by writing row by row for csv,js,dot,html in same time
         final String    dotFilename = writeDotFile( graphName, relations );
         final String    jsFilename  = writeJsFile( graphName, relations );
         final String    trFilename  = writeTableReport(Paths.get(outputDir, graphName, "result_table.html"), relations);
@@ -271,9 +272,9 @@ public final class GraphWriter {
 
         graphicReport.addGraph(graphName, graphName+".svg");
         graphicReport.close();
-        final String url = graphName+" <a href=\""+Paths.get(graphName,"result_svg.html").toString()+"\">SVG</a>"+" <a href=\""+Paths.get(graphName,"result_table.html").toString()+"\">Table</a>";
+        final String    url         = graphName+" <a href=\""+Paths.get(graphName,"result_svg.html").toString()+"\">SVG</a>"+" <a href=\""+Paths.get(graphName,"result_table.html").toString()+"\">Table</a>";
         final int       colonIndex  = priorKnowledge.getDescription().indexOf(':');
-        final String    description = (colonIndex >= 0) ? priorKnowledge.getDescription().substring(0, colonIndex):"";
+        final String    description = (colonIndex >= 0) ? priorKnowledge.getDescription().substring(0, colonIndex):priorKnowledge.getDescription();
         tableReport.addRow( priorKnowledge, url, description);
         csvReport.addRow(priorKnowledge);
         LOGGER.debug("File copied " + jsFilename);
