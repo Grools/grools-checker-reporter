@@ -34,7 +34,7 @@
  *
  */
 
-package fr.cea.ig.grools.svg;
+package fr.cea.ig.grools.reporter;
 
 
 import ch.qos.logback.classic.Logger;

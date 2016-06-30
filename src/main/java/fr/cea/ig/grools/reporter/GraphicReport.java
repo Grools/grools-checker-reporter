@@ -1,4 +1,4 @@
-package fr.cea.ig.grools.svg;
+package fr.cea.ig.grools.reporter;
 /*
  * Copyright LABGeM 20/02/15
  *
