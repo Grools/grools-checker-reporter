@@ -75,13 +75,10 @@ public final class DotFile extends WrapFile {
         init();
     }
 
-    public void close(){
-        try {
+    public void close() throws IOException{
+        if( !isClosed() )
             writeln("}");
-            super.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        super.close();
     }
 
     public void addNode( final String uniqueNodeName, final String color ){
