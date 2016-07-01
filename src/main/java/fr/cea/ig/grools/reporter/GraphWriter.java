@@ -35,6 +35,7 @@ package fr.cea.ig.grools.reporter;
 
 import ch.qos.logback.classic.Logger;
 import fr.cea.ig.grools.common.Command;
+import fr.cea.ig.grools.common.WrapFile;
 import fr.cea.ig.grools.fact.Concept;
 import fr.cea.ig.grools.fact.Observation;
 import fr.cea.ig.grools.fact.PriorKnowledge;
@@ -49,8 +50,10 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
-import java.util.HashSet;
+import java.util.Collection;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 /**
  *
@@ -184,23 +187,22 @@ public final class GraphWriter {
         Command.run("dot", Arrays.asList("-Tsvg", "-o" + outFile, dotFile.getAbsolutePath()));
     }
 
-    private String writeDotFile( @NonNull final String graphName, @NonNull final Set<Relation> relations ) throws Exception {
+    private String writeDotFile( @NonNull final String graphName, @NonNull final Set<Relation> relations, final Set<Concept> concepts ) throws Exception {
         final String    dotFilename = Paths.get(outputDir, graphName, graphName + ".dot").toString();
         final DotFile   dotFile     = new DotFile(graphName, dotFilename);
+
+        for( final Concept concept: concepts){
+            final String  sourceId  = underscoretify( concept.getName() );
+            if( !addNode( concept, sourceId, dotFile ) ){
+                LOGGER.warn("Unexpected type: " + concept.getClass());
+            }
+        }
 
         for( final Relation relation : relations){
             final Concept source    = relation.getSource();
             final Concept target    = relation.getTarget();
             final String  sourceId  = underscoretify( source.getName() );
             final String  targetId  = underscoretify( target.getName() );
-            if( !addNode( source, sourceId, dotFile ) ){
-                LOGGER.warn("Unexpected type: " + source.getClass());
-                continue;
-            }
-            if( !addNode( target, targetId, dotFile ) ){
-                LOGGER.warn("Unexpected type: " + source.getClass());
-                continue;
-            }
             dotFile.linkNode( sourceId, targetId, relation.getType().toString() );
         }
 
@@ -209,46 +211,54 @@ public final class GraphWriter {
         return dotFilename;
     }
 
-    private String writeJsFile( final String graphName, final Set<Relation> relations ) throws IOException {
+    private String writeJsFile( final String graphName, final Set<Concept> concepts ) throws IOException {
         final String    jsFilename  = Paths.get(outputDir, graphName, "js", graphName + ".js").toString();
         final JsFile    jsFile      = new JsFile(jsFilename);
         jsFile.writeln(String.format("    const object_svg_%s   = document.getElementById('%s');", graphName, graphName));
         jsFile.writeln(String.format("    const svgdoc_%s       = object_svg_%s.contentDocument;", graphName, graphName));
-        Set<Concept> concepts = new HashSet<>(relations.size()*2);
-        for( final Relation relation : relations){
-            concepts.add(relation.getSource());
-            concepts.add(relation.getTarget());
-        }
         for( final Concept concept : concepts)
             writeJSInfo( jsFile, concept, graphName );
         jsFile.close();
         return jsFilename;
     }
 
-    private String writeTableReport(@NonNull final Path path, @NonNull final Set<Relation> relations) throws Exception {
+    private String writeTableReport(@NonNull final Path path, @NonNull final Set<Concept> concepts) throws Exception {
         final TableReport table = new TableReport(path.toFile());
-        final Set<PriorKnowledge> priorKnowledges = new HashSet<>(relations.size()*2);
-        for( final Relation relation : relations){
-            if( relation.getSource() instanceof PriorKnowledge)
-                priorKnowledges.add((PriorKnowledge)relation.getSource());
-            if( relation.getTarget() instanceof PriorKnowledge)
-                priorKnowledges.add((PriorKnowledge)relation.getTarget());
-        }
-        for( final PriorKnowledge pk : priorKnowledges ){
-            table.addRow(pk);
+        for( final Concept concept: concepts){
+            if( concept instanceof PriorKnowledge)
+                table.addRow((PriorKnowledge) concept);
         }
         table.close();
         return table.getFileName();
     }
 
-    private String writeCSVReport(@NonNull final Path path, @NonNull final Set<Relation> relations) throws Exception {
+    private String writeCSVReport(@NonNull final Path path, @NonNull final Set<Concept> concepts) throws Exception {
         CSVReport csv = new CSVReport(path.toFile());
-        for( final Relation relation : relations ){
-            csv.addRow( relation.getSource());
-            csv.addRow( relation.getTarget());
-        }
+        for( final Concept concept : concepts )
+            csv.addRow( concept );
         csv.close();
         return csv.getFileName();
+    }
+
+    private String writeJSONFile(@NonNull final Path jsonPathFile, @NonNull final Set<Relation> relations, final Set<Concept> concepts) throws Exception {
+        final WrapFile json     = new WrapFile(jsonPathFile.toFile());
+        final AtomicInteger atomicInteger = new AtomicInteger(0);
+        json.writeln("{");
+        json.writeln("  \"edges\": [");
+        final String edges = relations.stream()
+                                      .map( rel -> String.format("    {\"source\": \"%s\", \"target\":\"%s\" ,\"id\":\"%s_%s\" , \"type\": \"arrow\", \"label\":\"%s\"}", rel.getSource().getName(), rel.getTarget().getName(), rel.getSource().getName(), rel.getTarget().getName(), rel.getType() ))
+                                      .collect(Collectors.joining(",\n"));
+        json.writeln( edges );
+        json.writeln("  ]");
+        json.writeln("  \"nodes\": [");
+        final String nodes = concepts.stream()
+                                      .map( concept -> String.format("     {\"label\":\"%s\",\"id\":\"%s\" ,\"color\":\"rgb(0,255,0)\",\"size\":1, \"x\": %.2f, \"y\": %.2f}", concept.getLabel(), concept.getName(),  Math.cos(Math.PI * 2 * atomicInteger.get() / concepts.size()), Math.sin(Math.PI * 2 * atomicInteger.getAndIncrement() / concepts.size()) ) )
+                                      .collect(Collectors.joining(",\n"));
+        json.writeln( nodes );
+        json.writeln("  ]");
+        json.writeln("}");
+        json.close();
+        return jsonPathFile.toString();
     }
 
     public GraphWriter( @NonNull final String outDir ) throws Exception{
@@ -264,11 +274,17 @@ public final class GraphWriter {
         outDir.mkdirs();
         final GraphicReport graphicReport = new GraphicReport(Paths.get(outputDir, graphName, "result_svg.html").toString());
 
-        // TODO reporting could to be faster by writing row by row for csv,js,dot,html in same time
-        final String    dotFilename = writeDotFile( graphName, relations );
-        final String    jsFilename  = writeJsFile( graphName, relations );
-        final String    trFilename  = writeTableReport(Paths.get(outputDir, graphName, "result_table.html"), relations);
-        final String    csvFilename = writeCSVReport(Paths.get(outputDir, graphName, "results.csv"), relations);
+        // TODO reporting could be faster by writing row by row for csv,js,dot,html in same time
+        final Set<Concept> concepts = relations.stream()
+                                               .map( rel -> Arrays.asList(rel.getSource(),rel.getTarget()) )
+                                               .flatMap(Collection::stream)
+                                               .collect(Collectors.toSet());
+
+        final String    dotFilename = writeDotFile( graphName, relations, concepts );
+        final String    jsFilename  = writeJsFile( graphName, concepts );
+        final String    trFilename  = writeTableReport(Paths.get(outputDir, graphName, "result_table.html"), concepts);
+        final String    csvFilename = writeCSVReport(Paths.get(outputDir, graphName, "results.csv"), concepts);
+        final String    jsonFilename = writeJSONFile(Paths.get(outputDir, graphName, "results.json"), relations,concepts);
 
         graphicReport.addGraph(graphName, graphName+".svg");
         graphicReport.close();
@@ -279,6 +295,7 @@ public final class GraphWriter {
         csvReport.addRow(priorKnowledge);
         LOGGER.debug("File copied " + jsFilename);
         LOGGER.debug("File copied " + trFilename);
+        LOGGER.debug("File copied " + jsonFilename);
         LOGGER.debug("File copied " + csvFilename);
         LOGGER.debug("File copied " + dotFilename);
     }

@@ -37,10 +37,11 @@ package fr.cea.ig.grools.common;
 import ch.qos.logback.classic.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedOutputStream;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 
 /**
  *
@@ -52,14 +53,12 @@ import java.io.IOException;
  * @enduml
  */
 public class  WrapFile {
-    private static final Logger LOG = (Logger) LoggerFactory.getLogger(WrapFile.class);
-    protected static final String exepected     = "#C1FFC1";
-    protected static final String unexepected   = "#FFC0CB";
-    protected static final String newline       = System.getProperty("line.separator");
-    protected static final int PAGE_SIZE        = 4096;
+    private static final    Logger  LOG         = (Logger) LoggerFactory.getLogger(WrapFile.class);
+    protected static final  String  newline     = System.getProperty("line.separator");
+    protected static final  int     PAGE_SIZE   = 4_096;
 
     protected final File file;
-    protected final BufferedOutputStream bos;
+    protected final BufferedWriter bos;
     protected boolean isClosed;
 
     public WrapFile(final String filepath) throws IOException {
@@ -74,18 +73,20 @@ public class  WrapFile {
             LOG.info("Directory " + file.getParentFile() + "exists already");
         }
         this.file = file;
-        this.bos = new BufferedOutputStream(new FileOutputStream(file), 10 * PAGE_SIZE);
+        this.bos = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file)), 10 * PAGE_SIZE);
         isClosed = false;
     }
 
     public void writeln( final String line ) throws IOException {
         final String tmp = line + newline;
-        bos.write( tmp.getBytes("UTF-8") );
+        bos.write( tmp  );
     }
 
     public void close() throws IOException {
-        isClosed = true;
-        bos.close();
+        if( ! isClosed ) {
+            isClosed = true;
+            bos.close();
+        }
     }
 
     public boolean isClosed(){
@@ -110,8 +111,7 @@ public class  WrapFile {
 
 
     public void finalize() throws Throwable {
-        if( ! isClosed )
-            close();
+        close();
         super.finalize();
     }
 }

@@ -47,7 +47,6 @@ import org.apache.commons.csv.CSVPrinter;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -67,11 +66,12 @@ public class CSVReport extends WrapFile {
     private static final CSVFormat  format = CSVFormat.RFC4180
                                                       .withDelimiter( ';' )
                                                       .withRecordSeparator('\n')
+                                                      .withQuote('"')
                                                       .withFirstRecordAsHeader();
     private CSVPrinter csvPrinter;
 
     private void init() throws IOException {
-        csvPrinter = new CSVPrinter(new FileWriter(file), format);
+        csvPrinter = new CSVPrinter( bos, format);
         csvPrinter.printRecord(header);
     }
 
@@ -115,13 +115,13 @@ public class CSVReport extends WrapFile {
     }
 
     public void close() throws IOException {
-        if( ! isClosed() )
-            isClosed = true;
+        if( !isClosed() )
+            csvPrinter.close();
+        super.close();
     }
 
     public void finalize() throws Throwable {
-        if( ! isClosed )
-            close();
+        close();
         super.finalize();
     }
 }
