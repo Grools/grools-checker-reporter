@@ -226,7 +226,6 @@ public final class TableReport extends WrapFile {
 
     public void close() throws IOException {
         if( ! isClosed() ) {
-            isClosed = true;
             writeln("                </tbody>");
             writeln("            </table>");
             writeln("        <div>");
@@ -237,8 +236,7 @@ public final class TableReport extends WrapFile {
     }
 
     public void finalize() throws Throwable {
-        if( ! isClosed )
-            close();
+        close();
         super.finalize();
     }
 
