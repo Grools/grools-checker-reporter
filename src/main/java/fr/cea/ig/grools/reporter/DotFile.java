@@ -103,7 +103,7 @@ public final class DotFile extends WrapFile {
 
     public void linkNode( final String parent, final String child, final String label){
         try {
-            writeln( parent.replace(' ', '_') + " -> " + child + " [ label=\""+ label +"\"];");
+            writeln( "  "+ parent.replace(' ', '_') + " -> " + child + " [ label=\""+ label +"\"];");
         } catch (IOException e) {
             e.printStackTrace();
         }
