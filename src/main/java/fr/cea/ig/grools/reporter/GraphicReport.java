@@ -75,6 +75,7 @@ public final class GraphicReport extends WrapFile {
         writeln("           }");
         writeln("            .grools p{");
         writeln("                padding-left:1em;");
+        writeln("                padding-right:1em;");
         writeln("                padding-bottom:1em;");
         writeln("            }");
         writeln("        </style>");
