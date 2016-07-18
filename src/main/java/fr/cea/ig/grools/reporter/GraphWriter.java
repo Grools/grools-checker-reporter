@@ -126,7 +126,7 @@ public final class GraphWriter {
     }
 
     private static String priorKnowledgeToHTML( @NonNull final PriorKnowledge pk){
-        return String.format( "%s<br>Description: %s<br>is dispensable: %s<br>Prediction: %s<br>Expectation: %s<br>Conclusion: %s", pk.getName(), pk.getDescription().replaceAll("\'","&quote;"), pk.getIsDispensable()? "Yes":"No", pk.getPrediction(), pk.getExpectation(), pk.getConclusion() );
+        return String.format( "%s<br>Description: %s<br>is specific: %s<br>is dispensable: %s<br>Prediction: %s<br>Expectation: %s<br>Conclusion: %s", pk.getName(), pk.getDescription().replaceAll("\'","&quote;"), pk.getIsSpecific()? "Yes":"No",  pk.getIsDispensable()? "Yes":"No", pk.getPrediction(), pk.getExpectation(), pk.getConclusion() );
     }
 
     private static String observationToHTML( @NonNull final Observation observation){
