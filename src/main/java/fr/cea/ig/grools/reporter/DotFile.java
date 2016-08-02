@@ -59,6 +59,10 @@ public final class DotFile extends WrapFile {
 
     private void init() throws IOException {
         writeln("digraph " + graphName + " {");
+        writeln("  orientation=landscape;" );
+        writeln("  rankdir=LR;" );
+        writeln("  orientation=-90;" );
+        writeln("  edge[ color=grey, penwidth=0.75, fontcolor=darkred, fontsize=10];" );
         writeln("  rankdir=BT");
         writeln("  node[shape=\"box\" style=\"filled, rounded\" fontcolor=blue ]");
     }

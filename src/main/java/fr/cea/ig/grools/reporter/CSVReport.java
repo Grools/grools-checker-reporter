@@ -40,6 +40,7 @@ import ch.qos.logback.classic.Logger;
 import fr.cea.ig.grools.common.WrapFile;
 import fr.cea.ig.grools.fact.Concept;
 import fr.cea.ig.grools.fact.Observation;
+import fr.cea.ig.grools.fact.ObservationSet;
 import fr.cea.ig.grools.fact.PriorKnowledge;
 import lombok.NonNull;
 import org.apache.commons.csv.CSVFormat;
@@ -98,7 +99,7 @@ public class CSVReport extends WrapFile {
                 case ANNOTATION:        records.add(o.getTruthValue() ) ; records.add(o.getTruthValue()); break;
                 case EXPERIMENTATION:   records.add("NA")               ; records.add(o.getTruthValue() );break;
                 default:
-                    LOGGER.warn("Unsupported observation type: "+o.getType());
+                    LOGGER.warn("Unexpected observation type: "+o.getType());
             }
             records.add("NA");
         }
@@ -110,7 +111,7 @@ public class CSVReport extends WrapFile {
             records.add( pk.getConclusion() );
         }
         else
-            LOGGER.warn("Unsupported type: " + concept.getClass() );
+            LOGGER.warn("Unexpected type: " + concept.getClass() );
         csvPrinter.printRecord(records);
     }
 

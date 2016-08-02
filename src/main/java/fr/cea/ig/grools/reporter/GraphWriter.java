@@ -67,7 +67,7 @@ import java.util.stream.Collectors;
  * @enduml
  */
 public final class GraphWriter {
-    private static final Logger LOGGER = (Logger) LoggerFactory.getLogger(GraphWriter.class);
+    private static transient final Logger LOGGER = (Logger) LoggerFactory.getLogger(GraphWriter.class);
     private final String      outputDir;
     private final TableReport tableReport;
     private final CSVReport   csvReport;
@@ -155,6 +155,7 @@ public final class GraphWriter {
 
     private static void writeJSInfo( @NonNull final JsFile jsFile, @NonNull final Concept concept, @NonNull final String graphName) throws IOException {
             String          color;
+            final String name = underscoretify( concept.getName() );
             if( concept instanceof PriorKnowledge ) {
                 final PriorKnowledge priorKnowledge = (PriorKnowledge) concept;
                 switch (priorKnowledge.getConclusion()) {
@@ -170,14 +171,12 @@ public final class GraphWriter {
                         color = "LightPink";
                         break;
                 }
-                final String name = underscoretify( concept.getName() );
                 jsFile.writeln(String.format("    const svg_%s = svgdoc_%s.getElementById('%s');", name, graphName, name ));
                 jsFile.writeln(String.format("    tooltips_event( svg_%s, '%s', '%s' );", name, priorKnowledgeToHTML(priorKnowledge), color));
             }
             else if( concept instanceof Observation ){
                 final Observation observation = (Observation)concept;
                 color = "White";
-                final String name = underscoretify( concept.getName() );
                 jsFile.writeln(String.format("    const svg_%s = svgdoc_%s.getElementById('%s');", name, graphName, name ));
                 jsFile.writeln(String.format("    tooltips_event( svg_%s, '%s', '%s' );", name, observationToHTML(observation), color));
             }
