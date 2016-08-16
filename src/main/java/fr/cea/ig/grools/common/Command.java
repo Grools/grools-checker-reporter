@@ -54,42 +54,42 @@ import java.util.ArrayList;
  * @enduml
  */
 public class Command {
-    public static List<BufferedReader> run( final String cmd, final List<String> params) throws Exception {
-
-        List<String> command = new ArrayList<String>(Arrays.asList(cmd));
-        command.addAll(params);
+    public static List<BufferedReader> run( final String cmd, final List<String> params ) throws Exception {
+        
+        List<String> command = new ArrayList<String>( Arrays.asList( cmd ) );
+        command.addAll( params );
         return run( command );
     }
-
+    
     /**
-     *
      * @param command run a command from a list usually space are used as splitter
      * @return output buffered at index 0 and error buffered at index 1
      * @throws IOException if error while trying to command output
      */
     public static List<BufferedReader> run( final List<String> command ) throws Exception {
-        final Process             process = new ProcessBuilder( command ).start();
-        final InputStream         out     = process.getInputStream();
-        final InputStreamReader   outr    = new InputStreamReader(out, "UTF-8");
-        final BufferedReader      outb    = new BufferedReader(outr);
-        final InputStream         err     = process.getErrorStream();
-        final InputStreamReader   errr    = new InputStreamReader(err, "UTF-8");
-        final BufferedReader      errbr   = new BufferedReader(errr);
-        synchronized(process) {
+        final Process           process = new ProcessBuilder( command ).start( );
+        final InputStream       out     = process.getInputStream( );
+        final InputStreamReader outr    = new InputStreamReader( out, "UTF-8" );
+        final BufferedReader    outb    = new BufferedReader( outr );
+        final InputStream       err     = process.getErrorStream( );
+        final InputStreamReader errr    = new InputStreamReader( err, "UTF-8" );
+        final BufferedReader    errbr   = new BufferedReader( errr );
+        synchronized( process ) {
             try {
-                process.waitFor();
-            }catch (InterruptedException e) {
-                e.printStackTrace();
+                process.waitFor( );
+            }
+            catch( InterruptedException e ) {
+                e.printStackTrace( );
             }
         }
-        int exitStatus = process.exitValue();
-        if( exitStatus != 0) {
-            final StringBuilder msg = new StringBuilder();
-            errbr.lines().forEach( line ->{
+        int exitStatus = process.exitValue( );
+        if( exitStatus != 0 ) {
+            final StringBuilder msg = new StringBuilder( );
+            errbr.lines( ).forEach( line -> {
                 msg.append( line );
-            });
-            throw new Exception(msg.toString());
+            } );
+            throw new Exception( msg.toString( ) );
         }
-        return Arrays.asList(outb,errbr);
+        return Arrays.asList( outb, errbr );
     }
 }

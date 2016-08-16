@@ -29,7 +29,6 @@ repositories {
     mavenLocal()
     mavenCentral()
     maven { url "http://repository.jboss.org/nexus/content/groups/public" }
-    maven { url "https://gsphere.genoscope.cns.fr/nexus/content/groups/public" }
 }
 
 dependencies {
@@ -66,6 +65,7 @@ tasks.withType(JavaForkOptions) {
 plantuml{
     fileFormat = 'SVG'
 }
+
 findbugs {
     effort = "max"
     ignoreFailures = true
@@ -103,9 +103,4 @@ extraArchive {
     sources  = true
     tests    = true
     javadoc  = true
-}
-nexus {
-    sign                  = false
-    repositoryUrl         = 'https://gsphere.genoscope.cns.fr/nexus/content/repositories/releases/'
-    snapshotRepositoryUrl = 'https://gsphere.genoscope.cns.fr/nexus/content/repositories/snapshots/'
 }

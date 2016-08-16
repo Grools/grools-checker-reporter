@@ -52,66 +52,66 @@ import java.io.OutputStreamWriter;
  * }
  * @enduml
  */
-public class  WrapFile {
-    private static final    Logger  LOG         = (Logger) LoggerFactory.getLogger(WrapFile.class);
-    protected static final  String  newline     = System.getProperty("line.separator");
-    protected static final  int     PAGE_SIZE   = 4_096;
+public class WrapFile {
+    private static final   Logger LOG       = ( Logger ) LoggerFactory.getLogger( WrapFile.class );
+    protected static final String newline   = System.getProperty( "line.separator" );
+    protected static final int    PAGE_SIZE = 4_096;
 
-    protected final File file;
+    protected final File           file;
     protected final BufferedWriter bos;
-    protected boolean isClosed;
+    protected       boolean        isClosed;
 
-    public WrapFile(final String filepath) throws IOException {
-        this(new File(filepath));
+    public WrapFile( final String filepath ) throws IOException {
+        this( new File( filepath ) );
     }
 
-    public WrapFile( final File file) throws IOException {
-        if (!file.getParentFile().exists()) {
-            final File parentFile     = file.getParentFile();
-            final boolean isCreated   = parentFile.mkdirs();
-        if( ! isCreated )
-            LOG.info("Directory " + file.getParentFile() + "exists already");
+    public WrapFile( final File file ) throws IOException {
+        if( !file.getParentFile( ).exists( ) ) {
+            final File    parentFile = file.getParentFile( );
+            final boolean isCreated  = parentFile.mkdirs( );
+            if( !isCreated )
+                LOG.info( "Directory " + file.getParentFile( ) + "exists already" );
         }
         this.file = file;
-        this.bos = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file)), 10 * PAGE_SIZE);
+        this.bos = new BufferedWriter( new OutputStreamWriter( new FileOutputStream( file ) ), 10 * PAGE_SIZE );
         isClosed = false;
     }
 
     public void writeln( final String line ) throws IOException {
         final String tmp = line + newline;
-        bos.write( tmp  );
+        bos.write( tmp );
     }
 
-    public void close() throws IOException {
-        if( ! isClosed ) {
+    public void close( ) throws IOException {
+        if( !isClosed ) {
             isClosed = true;
-            bos.close();
+            bos.close( );
         }
     }
 
-    public boolean isClosed(){
+    public boolean isClosed( ) {
         return isClosed;
     }
 
-    public String getFileName(){
-        return file.getName();
+    public String getFileName( ) {
+        return file.getName( );
     }
 
-    public String getDirectory(){
-        return file.getParent();
+    public String getDirectory( ) {
+        return file.getParent( );
     }
 
-    public String getAbsolutePath(){
-        return file.getAbsolutePath();
+    public String getAbsolutePath( ) {
+        return file.getAbsolutePath( );
     }
 
-    public String getPath(){
-        return file.getPath();
+    public String getPath( ) {
+        return file.getPath( );
     }
 
 
-    public void finalize() throws Throwable {
-        close();
-        super.finalize();
+    public void finalize( ) throws Throwable {
+        close( );
+        super.finalize( );
     }
 }

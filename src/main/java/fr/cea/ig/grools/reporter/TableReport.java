@@ -58,117 +58,117 @@ import java.nio.file.Paths;
  * @enduml
  */
 public final class TableReport extends WrapFile {
-    private static final Logger LOG = (Logger) LoggerFactory.getLogger(TableReport.class);
-
-    private void init() throws Exception {
-        final String outputDir = file.getParent();
-        writeln("<!DOCTYPE html>");
-        writeln("<html>");
-        writeln("    <head>");
-        writeln("        <title>Reporting</title>");
-        writeln("        <meta charset=\"utf-8\">");
-        writeln("        <style type='text/css'>");
-        writeln("            td {");
-        writeln("                border: 1px solid black;");
-        writeln("            }");
-        writeln("            #results                                         { width:100%;}");
-        writeln("            #results td                                      { padding: 5px 5px 5px 5px;}");
-        writeln("            #results tr > td:first-child                     { text-align:left;}");
-        writeln("            #results tr > td:first-child + td                { text-align:justify;}");
-        writeln("            #results tr > td:first-child + td + td           { text-align:center;}");
-        writeln("            #results tr > td:first-child + td + td + td      { text-align:center;}");
-        writeln("            #results tr > td:first-child + td + td + td +td  { text-align:center;}");
-        writeln("            .list {");
-        writeln("              font-family:sans-serif;");
-        writeln("            }");
-        writeln("            td {");
-        writeln("              padding:10px; ");
-        writeln("              border:solid 1px #eee;");
-        writeln("            }");
-        writeln("            input {");
-        writeln("              border:solid 1px #ccc;");
-        writeln("              border-radius: 5px;");
-        writeln("              padding:7px 14px;");
-        writeln("              margin-bottom:10px");
-        writeln("            }");
-        writeln("            input:focus {");
-        writeln("              outline:none;");
-        writeln("              border-color:#aaa;");
-        writeln("            }");
-        writeln("            .sort {");
-        writeln("              padding:8px 30px;");
-        writeln("              border-radius: 6px;");
-        writeln("              border:none;");
-        writeln("              display:inline-block;");
-        writeln("              color:#fff;");
-        writeln("              text-decoration: none;");
-        writeln("              background-color: #28a8e0;");
-        writeln("              height:30px;");
-        writeln("            }");
-        writeln("            .sort:hover {");
-        writeln("              text-decoration: none;");
-        writeln("              background-color:#1b8aba;");
-        writeln("            }");
-        writeln("            .sort:focus {");
-        writeln("              outline:none;");
-        writeln("            }");
-        writeln("            .sort:after {");
-        writeln("              display:inline-block;");
-        writeln("              width: 0;");
-        writeln("              height: 0;");
-        writeln("              border-left: 5px solid transparent;");
-        writeln("              border-right: 5px solid transparent;");
-        writeln("              border-bottom: 5px solid transparent;");
-        writeln("              content:\"\";");
-        writeln("              position: relative;");
-        writeln("              top:-10px;");
-        writeln("              right:-5px;");
-        writeln("            }");
-        writeln("            .sort.asc:after {");
-        writeln("              width: 0;");
-        writeln("              height: 0;");
-        writeln("              border-left: 5px solid transparent;");
-        writeln("              border-right: 5px solid transparent;");
-        writeln("              border-top: 5px solid #fff;");
-        writeln("              content:\"\";");
-        writeln("              position: relative;");
-        writeln("              top:4px;");
-        writeln("              right:-5px;");
-        writeln("            }");
-        writeln("            .sort.desc:after {");
-        writeln("              width: 0;");
-        writeln("              height: 0;");
-        writeln("              border-left: 5px solid transparent;");
-        writeln("              border-right: 5px solid transparent;");
-        writeln("              border-bottom: 5px solid #fff;");
-        writeln("              content:\"\";");
-        writeln("              position: relative;");
-        writeln("              top:-4px;");
-        writeln("              right:-5px;");
-        writeln("            }");
-        writeln("        div.button{");
-        writeln("            margin: 20px;");
-        writeln("        }");
-        writeln("        .button a{");
-        writeln("            -webkit-appearance: button;");
-        writeln("            -moz-appearance: button;");
-        writeln("            appearance: button;");
-        writeln("            text-decoration: none;");
-        writeln("            color: initial;");
-        writeln("            margin-bottom: 10px;");
-        writeln("        }");
-        writeln("        .button input{");
-        writeln("            margin-right: 100px;");
-        writeln("        }");
-        writeln("        </style>");
-        writeln("        <script type=\"text/javascript\" src=\"js/list.js\"></script>");
-        writeln("        <script type=\"text/javascript\">");
-        writeln("          window.onload=function() {");
-        writeln("            var options = { valueNames: [ 'Concept', 'Description', 'Prediction', 'Expectation', 'Conclusion' ] };");
-        writeln("            var rowList = new List('results', options);");
-        writeln("          };");
-        writeln("        </script>");
-        writeln("    </head>");
+    private static final Logger LOG = ( Logger ) LoggerFactory.getLogger( TableReport.class );
+    
+    private void init( ) throws Exception {
+        final String outputDir = file.getParent( );
+        writeln( "<!DOCTYPE html>" );
+        writeln( "<html>" );
+        writeln( "    <head>" );
+        writeln( "        <title>Reporting</title>" );
+        writeln( "        <meta charset=\"utf-8\">" );
+        writeln( "        <style type='text/css'>" );
+        writeln( "            td {" );
+        writeln( "                border: 1px solid black;" );
+        writeln( "            }" );
+        writeln( "            #results                                         { width:100%;}" );
+        writeln( "            #results td                                      { padding: 5px 5px 5px 5px;}" );
+        writeln( "            #results tr > td:first-child                     { text-align:left;}" );
+        writeln( "            #results tr > td:first-child + td                { text-align:justify;}" );
+        writeln( "            #results tr > td:first-child + td + td           { text-align:center;}" );
+        writeln( "            #results tr > td:first-child + td + td + td      { text-align:center;}" );
+        writeln( "            #results tr > td:first-child + td + td + td +td  { text-align:center;}" );
+        writeln( "            .list {" );
+        writeln( "              font-family:sans-serif;" );
+        writeln( "            }" );
+        writeln( "            td {" );
+        writeln( "              padding:10px; " );
+        writeln( "              border:solid 1px #eee;" );
+        writeln( "            }" );
+        writeln( "            input {" );
+        writeln( "              border:solid 1px #ccc;" );
+        writeln( "              border-radius: 5px;" );
+        writeln( "              padding:7px 14px;" );
+        writeln( "              margin-bottom:10px" );
+        writeln( "            }" );
+        writeln( "            input:focus {" );
+        writeln( "              outline:none;" );
+        writeln( "              border-color:#aaa;" );
+        writeln( "            }" );
+        writeln( "            .sort {" );
+        writeln( "              padding:8px 30px;" );
+        writeln( "              border-radius: 6px;" );
+        writeln( "              border:none;" );
+        writeln( "              display:inline-block;" );
+        writeln( "              color:#fff;" );
+        writeln( "              text-decoration: none;" );
+        writeln( "              background-color: #28a8e0;" );
+        writeln( "              height:30px;" );
+        writeln( "            }" );
+        writeln( "            .sort:hover {" );
+        writeln( "              text-decoration: none;" );
+        writeln( "              background-color:#1b8aba;" );
+        writeln( "            }" );
+        writeln( "            .sort:focus {" );
+        writeln( "              outline:none;" );
+        writeln( "            }" );
+        writeln( "            .sort:after {" );
+        writeln( "              display:inline-block;" );
+        writeln( "              width: 0;" );
+        writeln( "              height: 0;" );
+        writeln( "              border-left: 5px solid transparent;" );
+        writeln( "              border-right: 5px solid transparent;" );
+        writeln( "              border-bottom: 5px solid transparent;" );
+        writeln( "              content:\"\";" );
+        writeln( "              position: relative;" );
+        writeln( "              top:-10px;" );
+        writeln( "              right:-5px;" );
+        writeln( "            }" );
+        writeln( "            .sort.asc:after {" );
+        writeln( "              width: 0;" );
+        writeln( "              height: 0;" );
+        writeln( "              border-left: 5px solid transparent;" );
+        writeln( "              border-right: 5px solid transparent;" );
+        writeln( "              border-top: 5px solid #fff;" );
+        writeln( "              content:\"\";" );
+        writeln( "              position: relative;" );
+        writeln( "              top:4px;" );
+        writeln( "              right:-5px;" );
+        writeln( "            }" );
+        writeln( "            .sort.desc:after {" );
+        writeln( "              width: 0;" );
+        writeln( "              height: 0;" );
+        writeln( "              border-left: 5px solid transparent;" );
+        writeln( "              border-right: 5px solid transparent;" );
+        writeln( "              border-bottom: 5px solid #fff;" );
+        writeln( "              content:\"\";" );
+        writeln( "              position: relative;" );
+        writeln( "              top:-4px;" );
+        writeln( "              right:-5px;" );
+        writeln( "            }" );
+        writeln( "        div.button{" );
+        writeln( "            margin: 20px;" );
+        writeln( "        }" );
+        writeln( "        .button a{" );
+        writeln( "            -webkit-appearance: button;" );
+        writeln( "            -moz-appearance: button;" );
+        writeln( "            appearance: button;" );
+        writeln( "            text-decoration: none;" );
+        writeln( "            color: initial;" );
+        writeln( "            margin-bottom: 10px;" );
+        writeln( "        }" );
+        writeln( "        .button input{" );
+        writeln( "            margin-right: 100px;" );
+        writeln( "        }" );
+        writeln( "        </style>" );
+        writeln( "        <script type=\"text/javascript\" src=\"js/list.js\"></script>" );
+        writeln( "        <script type=\"text/javascript\">" );
+        writeln( "          window.onload=function() {" );
+        writeln( "            var options = { valueNames: [ 'Concept', 'Description', 'Prediction', 'Expectation', 'Conclusion' ] };" );
+        writeln( "            var rowList = new List('results', options);" );
+        writeln( "          };" );
+        writeln( "        </script>" );
+        writeln( "    </head>" );
         writeln( "    <body>" );
         writeln( "        <div id=\"results\">" );
         writeln( "            <div class=\"button\">" );
@@ -193,51 +193,51 @@ public final class TableReport extends WrapFile {
         writeln( "                </tr>" );
         writeln( "                </thead>" );
         writeln( "                <tbody  class=\"list\">" );
-        String jsPath1 = ResourceExporter.export("/js/svg_common.js", outputDir);
-        String jsPath2 = ResourceExporter.export("/js/list.js", outputDir);
-        LOG.debug("File copied " + jsPath1 );
-        LOG.debug("File copied " + jsPath2 );
-
+        String jsPath1 = ResourceExporter.export( "/js/svg_common.js", outputDir );
+        String jsPath2 = ResourceExporter.export( "/js/list.js", outputDir );
+        LOG.debug( "File copied " + jsPath1 );
+        LOG.debug( "File copied " + jsPath2 );
+        
     }
-
+    
     public void addRow( @NonNull final PriorKnowledge priorKnowledge ) throws IOException {
-        addRow( priorKnowledge, priorKnowledge.getName(), priorKnowledge.getDescription());
+        addRow( priorKnowledge, priorKnowledge.getName( ), priorKnowledge.getDescription( ) );
     }
-
+    
     public void addRow( @NonNull final PriorKnowledge priorKnowledge, @NonNull final String concept, @NonNull final String description ) throws IOException {
-        writeln("                <tr>" );
-        writeln("                    <td class=\"Concept\">"     + concept                         + "</td>");
-        writeln("                    <td class=\"Description\">" + description                     + "</td>");
-        writeln("                    <td class=\"Prediction\">"  + priorKnowledge.getPrediction()  + "</td>");
-        writeln("                    <td class=\"Expectation\">" + priorKnowledge.getExpectation() + "</td>");
-        writeln("                    <td class=\"Conclusion\">"  + priorKnowledge.getConclusion()  + "</td>");
-        writeln("                </tr>");
+        writeln( "                <tr>" );
+        writeln( "                    <td class=\"Concept\">" + concept + "</td>" );
+        writeln( "                    <td class=\"Description\">" + description + "</td>" );
+        writeln( "                    <td class=\"Prediction\">" + priorKnowledge.getPrediction( ) + "</td>" );
+        writeln( "                    <td class=\"Expectation\">" + priorKnowledge.getExpectation( ) + "</td>" );
+        writeln( "                    <td class=\"Conclusion\">" + priorKnowledge.getConclusion( ) + "</td>" );
+        writeln( "                </tr>" );
     }
-
-    public TableReport(@NonNull final String outputDir, @NonNull final String fileName) throws Exception {
-        super( Paths.get(outputDir,fileName).toFile() );
-        init();
+    
+    public TableReport( @NonNull final String outputDir, @NonNull final String fileName ) throws Exception {
+        super( Paths.get( outputDir, fileName ).toFile( ) );
+        init( );
     }
-
-    public TableReport(final File file) throws Exception {
-        super(file);
-        init();
+    
+    public TableReport( final File file ) throws Exception {
+        super( file );
+        init( );
     }
-
-    public void close() throws IOException {
-        if( ! isClosed() ) {
-            writeln("                </tbody>");
-            writeln("            </table>");
-            writeln("        <div>");
-            writeln("    </body>");
-            writeln("</html>");
-            super.close();
+    
+    public void close( ) throws IOException {
+        if( !isClosed( ) ) {
+            writeln( "                </tbody>" );
+            writeln( "            </table>" );
+            writeln( "        <div>" );
+            writeln( "    </body>" );
+            writeln( "</html>" );
+            super.close( );
         }
     }
-
-    public void finalize() throws Throwable {
-        close();
-        super.finalize();
+    
+    public void finalize( ) throws Throwable {
+        close( );
+        super.finalize( );
     }
-
+    
 }

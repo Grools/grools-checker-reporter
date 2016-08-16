@@ -49,23 +49,23 @@ import java.io.*;
  */
 public final class JsFile extends WrapFile {
 
-    private void init() throws IOException {
-        writeln("window.onload=function() {");
+    private void init( ) throws IOException {
+        writeln( "window.onload=function() {" );
     }
 
-    public JsFile(final String filepath) throws IOException {
-        super(new File(filepath));
-        init();
+    public JsFile( final String filepath ) throws IOException {
+        super( new File( filepath ) );
+        init( );
     }
 
-    public JsFile( final File jsfile) throws IOException {
-        super(jsfile);
-        init();
+    public JsFile( final File jsfile ) throws IOException {
+        super( jsfile );
+        init( );
     }
 
-    public void close() throws IOException {
-        writeln("};");
-        super.close();
+    public void close( ) throws IOException {
+        writeln( "};" );
+        super.close( );
     }
 
 }

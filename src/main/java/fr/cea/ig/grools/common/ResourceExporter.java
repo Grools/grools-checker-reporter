@@ -54,44 +54,48 @@ import java.nio.file.Paths;
  * @enduml
  */
 public class ResourceExporter {
-    private static final Logger LOG = (Logger) LoggerFactory.getLogger(ResourceExporter.class);
+    private static final Logger LOG = ( Logger ) LoggerFactory.getLogger( ResourceExporter.class );
+
     /**
      * Export a resource embedded into a Jar file to the local file path.
      *
      * @param resourceName ie.: "/foo.txt"
-     * @param outputDir  path where file will be copied
+     * @param outputDir    path where file will be copied
      * @return The path to the exported resource
      * @throws Exception for any kind of exception
      */
-    static public String export( final String resourceName, final  String outputDir) throws Exception {
-        InputStream     stream      = null;
-        OutputStream    resStreamOut= null;
-        int readBytes;
-        final byte[] buffer         = new byte[4096];
-        final File  file            = Paths.get(outputDir, resourceName).toFile();
-        final String outputFile     = file.getAbsolutePath();
-        final boolean isCreated    = file.getParentFile().mkdirs();
-        if( ! isCreated )
-            LOG.trace("Directory " + file.getParentFile() + "exists already");
+    static public String export( final String resourceName, final String outputDir ) throws Exception {
+        InputStream   stream       = null;
+        OutputStream  resStreamOut = null;
+        int           readBytes;
+        final byte[]  buffer       = new byte[ 4096 ];
+        final File    file         = Paths.get( outputDir, resourceName ).toFile( );
+        final String  outputFile   = file.getAbsolutePath( );
+        final boolean isCreated    = file.getParentFile( ).mkdirs( );
+        if( !isCreated )
+            LOG.trace( "Directory " + file.getParentFile( ) + "exists already" );
 
         try {
-            stream = ResourceExporter.class.getResourceAsStream(resourceName);
-            if(stream == null)
-                throw new Exception("Cannot get resource \"" + resourceName + "\" from Jar file.");
+            stream = ResourceExporter.class.getResourceAsStream( resourceName );
+            if( stream == null )
+                throw new Exception( "Cannot get resource \"" + resourceName + "\" from Jar file." );
 
-            resStreamOut    = new FileOutputStream(outputFile);
-            while ((readBytes = stream.read(buffer)) > 0) {
-                resStreamOut.write(buffer, 0, readBytes);
+            resStreamOut = new FileOutputStream( outputFile );
+            while( ( readBytes = stream.read( buffer ) ) > 0 ) {
+                resStreamOut.write( buffer, 0, readBytes );
             }
-        } catch (Exception ex) {
+        }
+        catch( Exception ex ) {
             throw ex;
-        } finally {
+        }
+        finally {
             try {
-                    if( stream != null)
-                        stream.close();
-                    if(resStreamOut != null)
-                        resStreamOut.close();
-            } catch (Exception ex){
+                if( stream != null )
+                    stream.close( );
+                if( resStreamOut != null )
+                    resStreamOut.close( );
+            }
+            catch( Exception ex ) {
                 throw ex;
             }
         }
@@ -99,5 +103,7 @@ public class ResourceExporter {
         return outputFile;
     }
 
-    private    ResourceExporter(){};
+    private ResourceExporter( ) {
+    }
+    
 }

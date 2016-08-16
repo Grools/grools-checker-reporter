@@ -57,59 +57,61 @@ public final class DotFile extends WrapFile {
 
     private final String graphName;
 
-    private void init() throws IOException {
-        writeln("digraph " + graphName + " {");
-        writeln("  orientation=landscape;" );
-        writeln("  rankdir=LR;" );
-        writeln("  orientation=-90;" );
-        writeln("  edge[ color=grey, penwidth=0.75, fontcolor=darkred, fontsize=10];" );
-        writeln("  rankdir=BT");
-        writeln("  node[shape=\"box\" style=\"filled, rounded\" fontcolor=blue ]");
+    private void init( ) throws IOException {
+        writeln( "digraph " + graphName + " {" );
+        writeln( "  orientation=landscape;" );
+        writeln( "  rankdir=LR;" );
+        writeln( "  orientation=-90;" );
+        writeln( "  edge[ color=grey, penwidth=0.75, fontcolor=darkred, fontsize=10];" );
+        writeln( "  rankdir=BT" );
+        writeln( "  node[shape=\"box\" style=\"filled, rounded\" fontcolor=blue ]" );
     }
 
-    public DotFile(final String gName, final String filepath) throws IOException {
-        super(new File(filepath));
+    public DotFile( final String gName, final String filepath ) throws IOException {
+        super( new File( filepath ) );
         graphName = gName;
-        init();
+        init( );
     }
 
-    public DotFile( final String gName, final File file) throws IOException {
-        super(file);
+    public DotFile( final String gName, final File file ) throws IOException {
+        super( file );
         graphName = gName;
-        init();
+        init( );
     }
 
-    public void close() throws IOException{
-        if( !isClosed() )
-            writeln("}");
-        super.close();
+    public void close( ) throws IOException {
+        if( !isClosed( ) )
+            writeln( "}" );
+        super.close( );
     }
 
-    public void addNode( final String uniqueNodeName, final String color ){
+    public void addNode( final String uniqueNodeName, final String color ) {
         addNode( uniqueNodeName, color, "" );
     }
 
-    public void addNode( final String uniqueNodeName, final String color, final String shape ){
-        final String label  = uniqueNodeName.replace('_', ' ');
-        addNode(uniqueNodeName, label,color, shape);
+    public void addNode( final String uniqueNodeName, final String color, final String shape ) {
+        final String label = uniqueNodeName.replace( '_', ' ' );
+        addNode( uniqueNodeName, label, color, shape );
     }
 
-    public void addNode( final String uniqueNodeName, final String label, final String color, final String shape ){
+    public void addNode( final String uniqueNodeName, final String label, final String color, final String shape ) {
         try {
-            if( shape.isEmpty())
-                writeln(String.format("  %s [ id=\"%s\" label=\"%s\" fillcolor=\"%s\" ];", uniqueNodeName, uniqueNodeName, label, color));
+            if( shape.isEmpty( ) )
+                writeln( String.format( "  %s [ id=\"%s\" label=\"%s\" fillcolor=\"%s\" ];", uniqueNodeName, uniqueNodeName, label, color ) );
             else
-                writeln(String.format("  %s [ id=\"%s\" label=\"%s\" shape=\"%s\" fillcolor=\"%s\" ];", uniqueNodeName, uniqueNodeName, label, shape, color));
-        } catch (IOException e) {
-            e.printStackTrace();
+                writeln( String.format( "  %s [ id=\"%s\" label=\"%s\" shape=\"%s\" fillcolor=\"%s\" ];", uniqueNodeName, uniqueNodeName, label, shape, color ) );
+        }
+        catch( IOException e ) {
+            e.printStackTrace( );
         }
     }
 
-    public void linkNode( final String parent, final String child, final String label){
+    public void linkNode( final String parent, final String child, final String label ) {
         try {
-            writeln( "  "+ parent.replace(' ', '_') + " -> " + child + " [ label=\""+ label +"\"];");
-        } catch (IOException e) {
-            e.printStackTrace();
+            writeln( "  " + parent.replace( ' ', '_' ) + " -> " + child + " [ label=\"" + label + "\"];" );
+        }
+        catch( IOException e ) {
+            e.printStackTrace( );
         }
     }
 

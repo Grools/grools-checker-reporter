@@ -50,70 +50,70 @@ import java.util.Map;
  * @enduml
  */
 public final class GraphicReport extends WrapFile {
-    private final Map<String, String> svgs= new HashMap<>() ;
-
-    private void init() throws IOException{
-        writeln("<!DOCTYPE html>");
-        writeln("<html>");
-        writeln("    <head>");
-        writeln("        <meta charset=\"utf-8\">");
-        writeln("        <style type='text/css'>");
-        writeln("            .grools{");
-        writeln("                position: fixed;");
-        writeln("            }");
-        writeln("            .grools::before {");
-        writeln("                width: 100%;");
-        writeln("                height: 100%;");
-        writeln("                display: block;");
-        writeln("                -webkit-border-radius: 2em;");
-        writeln("                -moz-border-radius: 2em;");
-        writeln("                border-radius: 2em;");
-        writeln("                content: '';");
-        writeln("                background-image: linear-gradient(to bottom, #1a82f7 0%, #3a4ed5 20%);");
-        writeln("                position:absolute;");
-        writeln("                z-index:-1;");
-        writeln("           }");
-        writeln("            .grools p{");
-        writeln("                padding-left:1em;");
-        writeln("                padding-right:1em;");
-        writeln("                padding-bottom:1em;");
-        writeln("            }");
-        writeln("        </style>");
-        writeln("        <script type='text/javascript' src='../js/svg_common.js'></script>");
+    private final Map<String, String> svgs = new HashMap<>( );
+    
+    private void init( ) throws IOException {
+        writeln( "<!DOCTYPE html>" );
+        writeln( "<html>" );
+        writeln( "    <head>" );
+        writeln( "        <meta charset=\"utf-8\">" );
+        writeln( "        <style type='text/css'>" );
+        writeln( "            .grools{" );
+        writeln( "                position: fixed;" );
+        writeln( "            }" );
+        writeln( "            .grools::before {" );
+        writeln( "                width: 100%;" );
+        writeln( "                height: 100%;" );
+        writeln( "                display: block;" );
+        writeln( "                -webkit-border-radius: 2em;" );
+        writeln( "                -moz-border-radius: 2em;" );
+        writeln( "                border-radius: 2em;" );
+        writeln( "                content: '';" );
+        writeln( "                background-image: linear-gradient(to bottom, #1a82f7 0%, #3a4ed5 20%);" );
+        writeln( "                position:absolute;" );
+        writeln( "                z-index:-1;" );
+        writeln( "           }" );
+        writeln( "            .grools p{" );
+        writeln( "                padding-left:1em;" );
+        writeln( "                padding-right:1em;" );
+        writeln( "                padding-bottom:1em;" );
+        writeln( "            }" );
+        writeln( "        </style>" );
+        writeln( "        <script type='text/javascript' src='../js/svg_common.js'></script>" );
     }
-
-    public GraphicReport(final String filepath) throws IOException {
-        super(new File(filepath));
-        init();
+    
+    public GraphicReport( final String filepath ) throws IOException {
+        super( new File( filepath ) );
+        init( );
     }
-
-    public GraphicReport(final File file) throws IOException {
-        super(file);
-        init();
+    
+    public GraphicReport( final File file ) throws IOException {
+        super( file );
+        init( );
     }
-
-    public void addGraph( final String graphId, final String svgFile) throws IOException {
-        writeln("        <script type='text/javascript' src='js/" + graphId + ".js'></script>");
-        svgs.put(graphId, svgFile);
+    
+    public void addGraph( final String graphId, final String svgFile ) throws IOException {
+        writeln( "        <script type='text/javascript' src='js/" + graphId + ".js'></script>" );
+        svgs.put( graphId, svgFile );
     }
-
-    public void close() throws IOException {
+    
+    public void close( ) throws IOException {
         writeln( "    </head>" );
         writeln( "    <body>" );
-        for(final Map.Entry<String, String> entry: svgs.entrySet() ){
-            writeln( "        <object id='" + entry.getKey() + "' data='" + entry.getValue() + "' type='image/svg+xml'>" );
+        for( final Map.Entry<String, String> entry : svgs.entrySet( ) ) {
+            writeln( "        <object id='" + entry.getKey( ) + "' data='" + entry.getValue( ) + "' type='image/svg+xml'>" );
             writeln( "        Your browser doesn't support SVG" );
             writeln( "        </object>" );
         }
         writeln( "    </body>" );
-        writeln( "</html>");
-        super.close();
+        writeln( "</html>" );
+        super.close( );
     }
-
-    public void finalize() throws Throwable {
-        if( ! isClosed )
-            close();
-        super.finalize();
+    
+    public void finalize( ) throws Throwable {
+        if( !isClosed )
+            close( );
+        super.finalize( );
     }
-
+    
 }

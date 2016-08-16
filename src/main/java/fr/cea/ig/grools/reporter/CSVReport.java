@@ -62,67 +62,77 @@ import java.util.List;
  * @enduml
  */
 public class CSVReport extends WrapFile {
-    private static final Logger     LOGGER = (Logger) LoggerFactory.getLogger(CSVReport.class);
-    private static final Object[]   header = {"Name", "Label", "Source", "Description", "Type", "Prediction", "Expectation", "Conclusion"};
-    private static final CSVFormat  format = CSVFormat.RFC4180
-                                                      .withDelimiter( ';' )
-                                                      .withRecordSeparator('\n')
-                                                      .withQuote('"')
-                                                      .withFirstRecordAsHeader();
+    private static final Logger    LOGGER = ( Logger ) LoggerFactory.getLogger( CSVReport.class );
+    private static final Object[]  header = { "Name", "Label", "Source", "Description", "Type", "Prediction", "Expectation", "Conclusion" };
+    private static final CSVFormat format = CSVFormat.RFC4180
+            .withDelimiter( ';' )
+            .withRecordSeparator( '\n' )
+            .withQuote( '"' )
+            .withFirstRecordAsHeader( );
     private CSVPrinter csvPrinter;
 
-    private void init() throws IOException {
-        csvPrinter = new CSVPrinter( bos, format);
-        csvPrinter.printRecord(header);
+    private void init( ) throws IOException {
+        csvPrinter = new CSVPrinter( bos, format );
+        csvPrinter.printRecord( header );
     }
 
-    public CSVReport(@NonNull final String filepath) throws IOException {
-        super(filepath);
-        init();
+    public CSVReport( @NonNull final String filepath ) throws IOException {
+        super( filepath );
+        init( );
     }
 
-    public CSVReport(@NonNull final File file) throws IOException {
-        super(file);
-        init();
+    public CSVReport( @NonNull final File file ) throws IOException {
+        super( file );
+        init( );
     }
-    public void addRow( @NonNull final Concept concept) throws IOException {
-        final List<Object> records = new ArrayList<>();
-        records.add(concept.getName());
-        records.add(concept.getLabel());
-        records.add(concept.getSource());
-        records.add(concept.getDescription());
-        if( concept instanceof Observation ){
-            final Observation o = (Observation)concept;
-            records.add( o.getType() );
-            switch ( o.getType() ){
-                case COMPUTATION:       records.add(o.getTruthValue() ) ; records.add("NA"); break;
-                case ANNOTATION:        records.add(o.getTruthValue() ) ; records.add(o.getTruthValue()); break;
-                case EXPERIMENTATION:   records.add("NA")               ; records.add(o.getTruthValue() );break;
+
+    public void addRow( @NonNull final Concept concept ) throws IOException {
+        final List<Object> records = new ArrayList<>( );
+        records.add( concept.getName( ) );
+        records.add( concept.getLabel( ) );
+        records.add( concept.getSource( ) );
+        records.add( concept.getDescription( ) );
+        if( concept instanceof Observation ) {
+            final Observation o = ( Observation ) concept;
+            records.add( o.getType( ) );
+            switch( o.getType( ) ) {
+                case COMPUTATION:
+                    records.add( o.getTruthValue( ) );
+                    records.add( "NA" );
+                    break;
+                case CURATION:
+                    records.add( o.getTruthValue( ) );
+                    records.add( o.getTruthValue( ) );
+                    break;
+                case EXPERIMENTATION:
+                    records.add( "NA" );
+                    records.add( o.getTruthValue( ) );
+                    break;
                 default:
-                    LOGGER.warn("Unexpected observation type: "+o.getType());
+                    LOGGER.warn( "Unexpected observation type: " + o.getType( ) );
             }
-            records.add("NA");
+            records.add( "NA" );
         }
-        else if( concept instanceof PriorKnowledge ){
-            final PriorKnowledge pk = (PriorKnowledge) concept;
+        else if( concept instanceof PriorKnowledge ) {
+            final PriorKnowledge pk = ( PriorKnowledge ) concept;
             records.add( "PRIOR KNOWLEDGE" );
-            records.add( pk.getPrediction() );
-            records.add( pk.getExpectation() );
-            records.add( pk.getConclusion() );
+            records.add( pk.getPrediction( ) );
+            records.add( pk.getExpectation( ) );
+            records.add( pk.getConclusion( ) );
         }
         else
-            LOGGER.warn("Unexpected type: " + concept.getClass() );
-        csvPrinter.printRecord(records);
+            LOGGER.warn( "Unexpected type: " + concept.getClass( ) );
+        csvPrinter.printRecord( records );
     }
 
-    public void close() throws IOException {
-        if( !isClosed() )
-            csvPrinter.close();
-        super.close();
+    public void close( ) throws IOException {
+        if( !isClosed( ) )
+            csvPrinter.close( );
+        super.close( );
     }
 
-    public void finalize() throws Throwable {
-        close();
-        super.finalize();
+    public void finalize( ) throws Throwable {
+        close( );
+        super.finalize( );
     }
 }
