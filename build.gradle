@@ -28,7 +28,6 @@ description = projectDescription
 repositories {
     mavenLocal()
     mavenCentral()
-    maven { url "http://repository.jboss.org/nexus/content/groups/public" }
 }
 
 dependencies {
@@ -48,7 +47,7 @@ jar {
                     "Product-Name":                 projectName,
                     "provider":                     "Genoscope",
                     "Created-By":                   "LABGeM",
-                    "description":                  "BROOLS Application.",
+                    "description":                  "GROOLS Reporter Library.",
                     "Build-Date":                   new SimpleDateFormat("yyyy-MM-dd").format(new Date()),
                     "Build-JDK":                    System.getProperty("java.version"),
                     "Build-Gradle":                 project.gradle.gradleVersion
