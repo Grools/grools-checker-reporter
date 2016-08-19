@@ -40,6 +40,7 @@ import fr.cea.ig.grools.fact.Concept;
 import fr.cea.ig.grools.fact.Observation;
 import fr.cea.ig.grools.fact.PriorKnowledge;
 import fr.cea.ig.grools.fact.Relation;
+import fr.cea.ig.grools.logic.Conclusion;
 import fr.cea.ig.grools.logic.TruthValue;
 import fr.cea.ig.grools.logic.TruthValuePowerSet;
 import lombok.NonNull;
@@ -51,8 +52,11 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -274,11 +278,44 @@ public final class GraphWriter {
         json.close( );
         return jsonPathFile.toString( );
     }
-    
+
+    private static Map<String,Float> subGraphStat( @NonNull final Set<Relation> relations, @NonNull final Set<PriorKnowledge> priorKnowledges ){
+        final Map<String,Float> stats = new TreeMap<>(  );
+
+        final Set<PriorKnowledge> sources = relations.stream( )
+                                              .filter( relation -> relation.getSource() instanceof PriorKnowledge )
+                                              .filter( relation -> relation.getTarget() instanceof PriorKnowledge )
+                                              .map(    relation -> ( PriorKnowledge ) relation.getSource() )
+                                              .collect( Collectors.toSet( ) );
+
+
+        stats.put( "nb concepts", ( float ) priorKnowledges.size( ) );
+
+        final Set<PriorKnowledge> targets = relations.stream( )
+                                                     .filter( relation -> relation.getSource() instanceof PriorKnowledge )
+                                                     .filter( relation -> relation.getTarget() instanceof PriorKnowledge )
+                                                     .map(    relation -> ( PriorKnowledge ) relation.getTarget() )
+                                                     .collect( Collectors.toSet( ) );
+
+        final Set<PriorKnowledge> leaves = priorKnowledges.stream()
+                                                          .filter( pk -> sources.contains( pk ) )
+                                                          .filter( pk -> !targets.contains( pk ) )
+                                                          .collect( Collectors.toSet( ) );
+
+
+        stats.put( "nb leaf concepts", ( float ) leaves.size( ) );
+        Map<Conclusion, Long> conclusionsStats = leaves.stream( )
+                                                       .map( leaf -> leaf.getConclusion() )
+                                                       .collect(Collectors.groupingBy( Function.identity( ), Collectors.counting( ) ) );
+        conclusionsStats.forEach( (k,v) -> stats.put( k.toString(), v.floatValue() ) );
+
+        return stats;
+    }
+
     public GraphWriter( @NonNull final String outDir ) throws Exception {
-        outputDir = outDir;
+        outputDir   = outDir;
         tableReport = new TableReport( Paths.get( outputDir, "index.html" ).toFile( ) );
-        csvReport = new CSVReport( Paths.get( outputDir, "results.csv" ).toFile( ) );
+        csvReport   = new CSVReport( Paths.get( outputDir, "results.csv" ).toFile( ) );
     }
     
     public void addGraph( @NonNull final PriorKnowledge priorKnowledge, @NonNull Set<Relation> relations ) throws Exception {
@@ -293,6 +330,12 @@ public final class GraphWriter {
                                                .map( rel -> Arrays.asList( rel.getSource( ), rel.getTarget( ) ) )
                                                .flatMap( Collection::stream )
                                                .collect( Collectors.toSet( ) );
+
+        final Set<PriorKnowledge> priorKnowledges = concepts.stream()
+                                                            .filter(    c -> c instanceof PriorKnowledge )
+                                                            .map(       c -> (PriorKnowledge)c )
+                                                            .collect( Collectors.toSet() );
+        Map<String,Float> stats = subGraphStat( relations, priorKnowledges );
         
         final String dotFilename  = writeDotFile( graphName, relations, concepts );
         final String jsFilename   = writeJsFile( graphName, concepts );
@@ -302,10 +345,14 @@ public final class GraphWriter {
         
         graphicReport.addGraph( graphName, graphName + ".svg" );
         graphicReport.close( );
-        final String url         = graphName + " <a href=\"" + Paths.get( graphName, "result_svg.html" ).toString( ) + "\">SVG</a>" + " <a href=\"" + Paths.get( graphName, "result_table.html" ).toString( ) + "\">Table</a>";
+
+        final String url         = graphName + "<br>"
+                                             + " <a href=\"" + Paths.get( graphName, "result_svg.html" ).toString( )   + "\">SVG</a>"
+                                             + " <a href=\"" + Paths.get( graphName, "result_table.html" ).toString( ) + "\">Table</a>";
         final int    colonIndex  = priorKnowledge.getDescription( ).indexOf( ':' );
-        final String description = ( colonIndex >= 0 ) ? priorKnowledge.getDescription( ).substring( 0, colonIndex ) : priorKnowledge.getDescription( );
-        tableReport.addRow( priorKnowledge, url, description );
+        final String description = ( colonIndex >= 0 ) ? priorKnowledge.getDescription( ).substring( 0, colonIndex )
+                                                       : priorKnowledge.getDescription( );
+        tableReport.addRow( priorKnowledge, stats, url, description );
         csvReport.addRow( priorKnowledge );
         LOGGER.debug( "File copied " + jsFilename );
         LOGGER.debug( "File copied " + trFilename );

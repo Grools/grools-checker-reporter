@@ -38,15 +38,18 @@ package fr.cea.ig.grools.reporter;
 
 
 import ch.qos.logback.classic.Logger;
+import fr.cea.ig.grools.Reasoner;
 import fr.cea.ig.grools.common.ResourceExporter;
 import fr.cea.ig.grools.common.WrapFile;
 import fr.cea.ig.grools.fact.PriorKnowledge;
+import fr.cea.ig.grools.logic.TruthValueSet;
 import lombok.NonNull;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.util.Map;
 
 /**
  *
@@ -71,13 +74,14 @@ public final class TableReport extends WrapFile {
         writeln( "            td {" );
         writeln( "                border: 1px solid black;" );
         writeln( "            }" );
-        writeln( "            #results                                         { width:100%;}" );
-        writeln( "            #results td                                      { padding: 5px 5px 5px 5px;}" );
-        writeln( "            #results tr > td:first-child                     { text-align:left;}" );
-        writeln( "            #results tr > td:first-child + td                { text-align:justify;}" );
-        writeln( "            #results tr > td:first-child + td + td           { text-align:center;}" );
-        writeln( "            #results tr > td:first-child + td + td + td      { text-align:center;}" );
-        writeln( "            #results tr > td:first-child + td + td + td +td  { text-align:center;}" );
+        writeln( "            #results                                              { width:100%;}" );
+        writeln( "            #results td                                           { padding: 5px 5px 5px 5px;}" );
+        writeln( "            #results tr > td:first-child                          { text-align:left;}" );
+        writeln( "            #results tr > td:first-child + td                     { text-align:justify;}" );
+        writeln( "            #results tr > td:first-child + td + td                { text-align:center;}" );
+        writeln( "            #results tr > td:first-child + td + td + td           { text-align:center;}" );
+        writeln( "            #results tr > td:first-child + td + td + td + td      { text-align:center;}" );
+        writeln( "            #results tr > td:first-child + td + td + td + td + td { text-align:left;}" );
         writeln( "            .list {" );
         writeln( "              font-family:sans-serif;" );
         writeln( "            }" );
@@ -164,7 +168,7 @@ public final class TableReport extends WrapFile {
         writeln( "        <script type=\"text/javascript\" src=\"js/list.js\"></script>" );
         writeln( "        <script type=\"text/javascript\">" );
         writeln( "          window.onload=function() {" );
-        writeln( "            var options = { valueNames: [ 'Concept', 'Description', 'Prediction', 'Expectation', 'Conclusion' ] };" );
+        writeln( "            var options = { valueNames: [ 'Prior-Knowledge', 'Description', 'Prediction', 'Expectation', 'Conclusion', 'Leaf Statistics' ] };" );
         writeln( "            var rowList = new List('results', options);" );
         writeln( "          };" );
         writeln( "        </script>" );
@@ -178,18 +182,20 @@ public final class TableReport extends WrapFile {
         writeln( "            <table id=\"resultstable\">" );
         writeln( "                <colgroup>" );
         writeln( "                    <col width=\"20%\">" );
-        writeln( "                    <col width=\"50%\">" );
+        writeln( "                    <col width=\"40%\">" );
+        writeln( "                    <col width=\"10%\">" );
         writeln( "                    <col width=\"10%\">" );
         writeln( "                    <col width=\"10%\">" );
         writeln( "                    <col width=\"10%\">" );
         writeln( "                </colgroup>" );
         writeln( "                <thead>" );
         writeln( "                <tr>" );
-        writeln( "                    <th><span class=\"sort\" data-sort=\"Concept\">Concept</span></th>" );
+        writeln( "                    <th><span class=\"sort\" data-sort=\"Concept\">Prior-Knowledge</span></th>" );
         writeln( "                    <th><span class=\"sort\" data-sort=\"Description\">Description</span></th>" );
-        writeln( "                    <th><span class=\"sort\" data-sort=\"Prediction\">Prediction</span></th>" );
         writeln( "                    <th><span class=\"sort\" data-sort=\"Expectation\">Expectation</span></th>" );
+        writeln( "                    <th><span class=\"sort\" data-sort=\"Prediction\">Prediction</span></th>" );
         writeln( "                    <th><span class=\"sort\" data-sort=\"Conclusion\">Conclusion</span></th>" );
+        writeln( "                    <th><span class=\"sort\" data-sort=\"Statistics\">Leaf Statistics</span></th>" );
         writeln( "                </tr>" );
         writeln( "                </thead>" );
         writeln( "                <tbody  class=\"list\">" );
@@ -201,16 +207,29 @@ public final class TableReport extends WrapFile {
     }
     
     public void addRow( @NonNull final PriorKnowledge priorKnowledge ) throws IOException {
-        addRow( priorKnowledge, priorKnowledge.getName( ), priorKnowledge.getDescription( ) );
+        addRow( priorKnowledge, null,priorKnowledge.getName( ), priorKnowledge.getDescription( ) );
     }
     
-    public void addRow( @NonNull final PriorKnowledge priorKnowledge, @NonNull final String concept, @NonNull final String description ) throws IOException {
+    public void addRow( @NonNull final PriorKnowledge priorKnowledge, final Map<String,Float> stats, @NonNull final String concept, @NonNull final String description ) throws IOException {
+        final StringBuilder sb = new StringBuilder( "" );
+        final String expectation = TruthValueSet.toLiteral( Reasoner.expectationToTruthValueSet( priorKnowledge.getExpectation( ) ) ) + " - " + priorKnowledge.getExpectation( );
+        final String prediction  = TruthValueSet.toLiteral( Reasoner.predictionToTruthValueSet( priorKnowledge.getPrediction( ) ) ) + " - " + priorKnowledge.getPrediction( );
         writeln( "                <tr>" );
-        writeln( "                    <td class=\"Concept\">" + concept + "</td>" );
-        writeln( "                    <td class=\"Description\">" + description + "</td>" );
-        writeln( "                    <td class=\"Prediction\">" + priorKnowledge.getPrediction( ) + "</td>" );
-        writeln( "                    <td class=\"Expectation\">" + priorKnowledge.getExpectation( ) + "</td>" );
-        writeln( "                    <td class=\"Conclusion\">" + priorKnowledge.getConclusion( ) + "</td>" );
+        if( stats != null) {
+            stats.entrySet( )
+                 .stream( )
+                 .filter( entry -> !entry.getKey( ).equals( "nb concepts" ) )
+                 .forEach( entry -> sb.append( ( entry.getKey( ).equals( "nb leaf concepts" ) ) ? "Total" + ":" + entry.getValue( ).intValue( ) + "<br>"
+                                                       : entry.getKey( ).toString( ) + ": " + entry.getValue( ).intValue( ) + "<br>" ) );
+            writeln( "                    <td class=\"Prior-Knowledge\">"   + concept + "<br>"+ stats.get( "nb concepts" ).intValue( ) + " prior-knowledges" + "</td>" );
+        }
+        else
+            writeln( "                    <td class=\"Prior-Knowledge\">"   + concept  + "</td>" );
+        writeln( "                    <td class=\"Description\">"       + description                       + "</td>" );
+        writeln( "                    <td class=\"Expectation\">"       + expectation                       + "</td>" );
+        writeln( "                    <td class=\"Prediction\">"        + prediction                        + "</td>" );
+        writeln( "                    <td class=\"Conclusion\">"        + priorKnowledge.getConclusion( )   + "</td>" );
+        writeln( "                    <td class=\"Leaf Statistics\">"   + sb.toString()                     + "</td>" );
         writeln( "                </tr>" );
     }
     
