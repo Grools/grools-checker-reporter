@@ -35,7 +35,7 @@ dependencies {
     compile     group: 'ch.qos.logback'     , name: 'logback-classic' , version: logbackVersion
     compile     group: 'org.projectlombok'  , name: 'lombok'          , version: lombokVersion
     compile     group: 'ch.qos.logback'     , name: 'logback-classic' , version: logbackVersion
-    compile     group: 'fr.cea.ig'          , name: 'grools-checker'  , version: groolsVersion
+    compile     group: 'fr.cea.ig'          , name: 'grools-reasoner' , version: groolsReasonerVersion
     compile     group: 'org.apache.commons' , name: 'commons-csv'     , version: commonsCSVVersion
 }
 
