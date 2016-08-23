@@ -78,7 +78,7 @@ public final class GraphWriter {
     
     
     private static String colorList( final PriorKnowledge pk ) {
-        return toColorPred( pk.getPrediction( ) ) + ";0.5:" + toColorExp( pk.getExpectation( ) );
+        return  toColorExp( pk.getExpectation( ) ) + ";0.5:" + toColorPred( pk.getPrediction( ) );
     }
     
     private static String toColorPred( final TruthValuePowerSet tvSet ) {
