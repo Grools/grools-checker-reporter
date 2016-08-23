@@ -190,13 +190,15 @@ public final class GraphWriter {
                     break;
             }
             jsFile.writeln( String.format( "    const svg_%s = svgdoc_%s.getElementById('%s');", name, graphName, name ) );
-            jsFile.writeln( String.format( "    tooltips_event( svg_%s, '%s', '%s' );", name, priorKnowledgeToHTML( priorKnowledge ), color ) );
+            jsFile.writeln( String.format( "    const svg_%s_path = getPath( '%s', nodes_%s, edges_%s, [] );", name, name, graphName, graphName ) );
+            jsFile.writeln( String.format( "    tooltips_event( svg_%s, '%s', '%s', graph_%s, svg_%s_path );", name, priorKnowledgeToHTML( priorKnowledge ), color, graphName, name ) );
         }
         else if( concept instanceof Observation ) {
             final Observation observation = ( Observation ) concept;
             color = "White";
             jsFile.writeln( String.format( "    const svg_%s = svgdoc_%s.getElementById('%s');", name, graphName, name ) );
-            jsFile.writeln( String.format( "    tooltips_event( svg_%s, '%s', '%s' );", name, observationToHTML( observation ), color ) );
+            jsFile.writeln( String.format( "    const svg_%s_path = getPath( '%s', nodes_%s, edges_%s, [] );", name, name, graphName, graphName ) );
+            jsFile.writeln( String.format( "    tooltips_event( svg_%s, '%s', '%s', graph_%s, svg_%s_path );", name, observationToHTML( observation ), color, graphName, name ) );
         }
     }
     
@@ -234,6 +236,9 @@ public final class GraphWriter {
         final JsFile jsFile     = new JsFile( jsFilename );
         jsFile.writeln( String.format( "    const object_svg_%s   = document.getElementById('%s');", graphName, graphName ) );
         jsFile.writeln( String.format( "    const svgdoc_%s       = object_svg_%s.contentDocument;", graphName, graphName ) );
+        jsFile.writeln( String.format( "    const graph_%s        = Array.from( svgdoc_%s.querySelectorAll( \"g.node,g.edge\" ) );", graphName, graphName ) );
+        jsFile.writeln( String.format( "    const nodes_%s        = Array.from( svgdoc_%s.querySelectorAll( \"g.node\" ) );", graphName, graphName ) );
+        jsFile.writeln( String.format( "    const edges_%s        = Array.from( svgdoc_%s.querySelectorAll( \"g.edge\" ) );", graphName, graphName ) );
         for( final Concept concept : concepts )
             writeJSInfo( jsFile, concept, graphName );
         jsFile.close( );

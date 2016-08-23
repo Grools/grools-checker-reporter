@@ -38,7 +38,7 @@ package fr.cea.ig.grools.reporter;
 
 
 import ch.qos.logback.classic.Logger;
-import fr.cea.ig.grools.Reasoner;
+import fr.cea.ig.grools.reasoner.Reasoner;
 import fr.cea.ig.grools.common.ResourceExporter;
 import fr.cea.ig.grools.common.WrapFile;
 import fr.cea.ig.grools.fact.PriorKnowledge;

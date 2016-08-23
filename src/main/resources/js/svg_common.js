@@ -1,3 +1,22 @@
+
+Array.prototype.hasObject = (
+  !Array.indexOf ? function (o)
+  {
+    var l = this.length + 1;
+    while (l -= 1)
+    {
+        if (this[l - 1] === o)
+        {
+            return true;
+        }
+    }
+    return false;
+  } : function (o)
+  {
+    return (this.indexOf(o) !== -1);
+  }
+);
+
 function hasClass(el, className) {
   if (el.classList)
     return el.classList.contains(className)
@@ -20,7 +39,7 @@ function removeClass(el, className) {
   }
 }
 
-function tooltips_event( node, description, color ){
+function tooltips_event( node, description, color, graph, path ){
     const tooltips = createInformativeNode(node, description, color );
     var isSelected = false;
     document.body.appendChild(tooltips)
@@ -69,6 +88,12 @@ function tooltips_event( node, description, color ){
       addClass(tooltips, "NotClosable" );
       tooltipsPosition( event, tooltips, 40, 30 );
     }
+    graph.forEach( function( item ){
+        if( path.hasObject( item ) )
+            item.style.opacity = 1;
+        else
+            item.style.opacity = 0.5
+    }  )
   } );
 }
 
@@ -91,4 +116,18 @@ function createInformativeNode( node, text, color ){
 function tooltipsPosition( event, tooltips, ySshift, xShift ){
   tooltips.style.top = (event.pageY + ySshift - window.scrollY)+"px";
   tooltips.style.left= (event.pageX - xShift  - window.scrollX)+"px";
+}
+
+function getPath( node_id, nodes, edges, path ){
+    path.push( nodes.filter( n => n.id == node_id )[0] );
+    for( var edge_index=0; edge_index < edges.length; edge_index++ ){
+        var text        = edges[ edge_index ].getElementsByTagName('title')[0].textContent;
+        var relations   = text.split('->'); // 0: source 1: target
+        if( node_id == relations[0] ){
+            path.push( nodes.filter( n => n.id == relations[1] )[0] );
+            path.push( edges[ edge_index ] )
+            getPath( relations[1], nodes, edges, path );
+        }
+    }
+    return path;
 }
