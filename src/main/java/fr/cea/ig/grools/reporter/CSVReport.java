@@ -42,6 +42,8 @@ import fr.cea.ig.grools.fact.Concept;
 import fr.cea.ig.grools.fact.Observation;
 import fr.cea.ig.grools.fact.ObservationSet;
 import fr.cea.ig.grools.fact.PriorKnowledge;
+import fr.cea.ig.grools.logic.TruthValueSet;
+import fr.cea.ig.grools.reasoner.Reasoner;
 import lombok.NonNull;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
@@ -63,7 +65,7 @@ import java.util.List;
  */
 public class CSVReport extends WrapFile {
     private static final Logger    LOGGER = ( Logger ) LoggerFactory.getLogger( CSVReport.class );
-    private static final Object[]  header = { "Name", "Label", "Source", "Description", "Type", "Prediction", "Expectation", "Conclusion" };
+    private static final Object[]  header = { "Name", "Label", "Source", "Description", "Type", "Expectation", "Expectation approximated", "Prediction", "Prediction approximated", "Conclusion" };
     private static final CSVFormat format = CSVFormat.RFC4180
             .withDelimiter( ';' )
             .withRecordSeparator( '\n' )
@@ -112,12 +114,16 @@ public class CSVReport extends WrapFile {
                     LOGGER.warn( "Unexpected observation type: " + o.getType( ) );
             }
             records.add( "NA" );
+            records.add( "NA" );
+            records.add( "NA" );
         }
         else if( concept instanceof PriorKnowledge ) {
             final PriorKnowledge pk = ( PriorKnowledge ) concept;
             records.add( "PRIOR KNOWLEDGE" );
-            records.add( pk.getPrediction( ) );
             records.add( pk.getExpectation( ) );
+            records.add( TruthValueSet.toLiteral( Reasoner.expectationToTruthValueSet( pk.getExpectation( ) ) ) );
+            records.add( pk.getPrediction( ) );
+            records.add( TruthValueSet.toLiteral( Reasoner.predictionToTruthValueSet( pk.getPrediction( ) ) ) );
             records.add( pk.getConclusion( ) );
         }
         else
