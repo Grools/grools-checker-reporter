@@ -100,14 +100,20 @@ public class CSVReport extends WrapFile {
             switch( o.getType( ) ) {
                 case COMPUTATION:
                     records.add( o.getTruthValue( ) );
+                    records.add( o.getTruthValue( ) );
+                    records.add( "NA" );
                     records.add( "NA" );
                     break;
                 case CURATION:
                     records.add( o.getTruthValue( ) );
                     records.add( o.getTruthValue( ) );
+                    records.add( o.getTruthValue( ) );
+                    records.add( o.getTruthValue( ) );
                     break;
                 case EXPERIMENTATION:
                     records.add( "NA" );
+                    records.add( "NA" );
+                    records.add( o.getTruthValue( ) );
                     records.add( o.getTruthValue( ) );
                     break;
                 default:

@@ -165,7 +165,7 @@ public final class TableReport extends WrapFile {
         writeln( "            margin-right: 100px;" );
         writeln( "        }" );
         writeln( "        </style>" );
-        writeln( "        <script type=\"text/javascript\" src=\"js/list.js\"></script>" );
+        writeln( "        <script type=\"text/javascript\" src=\"../js/list.js\"></script>" );
         writeln( "        <script type=\"text/javascript\">" );
         writeln( "          window.onload=function() {" );
         writeln( "            var options = { valueNames: [ 'Prior-Knowledge', 'Description', 'Prediction', 'Expectation', 'Conclusion', 'Leaf Statistics' ] };" );
@@ -199,10 +199,6 @@ public final class TableReport extends WrapFile {
         writeln( "                </tr>" );
         writeln( "                </thead>" );
         writeln( "                <tbody  class=\"list\">" );
-        String jsPath1 = ResourceExporter.export( "/js/svg_common.js", outputDir );
-        String jsPath2 = ResourceExporter.export( "/js/list.js", outputDir );
-        LOG.debug( "File copied " + jsPath1 );
-        LOG.debug( "File copied " + jsPath2 );
         
     }
     

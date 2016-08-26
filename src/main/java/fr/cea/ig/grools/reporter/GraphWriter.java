@@ -35,6 +35,7 @@ package fr.cea.ig.grools.reporter;
 
 import ch.qos.logback.classic.Logger;
 import fr.cea.ig.grools.common.Command;
+import fr.cea.ig.grools.common.ResourceExporter;
 import fr.cea.ig.grools.common.WrapFile;
 import fr.cea.ig.grools.fact.Concept;
 import fr.cea.ig.grools.fact.Observation;
@@ -144,11 +145,11 @@ public final class GraphWriter {
     }
     
     private static String priorKnowledgeToHTML( @NonNull final PriorKnowledge pk ) {
-        return String.format( "%s<br>Description: %s<br>is specific: %s<br>is dispensable: %s<br>Expectation: %s<br>Prediction: %s<br>Conclusion: %s", pk.getName( ), pk.getDescription( ).replaceAll( "\'", "&quote;" ), pk.getIsSpecific( ) ? "Yes" : "No", pk.getIsDispensable( ) ? "Yes" : "No", pk.getExpectation( ), pk.getPrediction( ), pk.getConclusion( ) );
+        return String.format( "<b>Description:</b> %s<br><b>is specific:</b> %s<br><b>is dispensable:</b> %s<br><b>Expectation:</b> %s<br><b>Prediction:</b> %s<br><b>Conclusion:</b> %s",  pk.getDescription( ).replaceAll( "\'", "&quote;" ), pk.getIsSpecific( ) ? "Yes" : "No", pk.getIsDispensable( ) ? "Yes" : "No", pk.getExpectation( ), pk.getPrediction( ), pk.getConclusion( ) );
     }
     
     private static String observationToHTML( @NonNull final Observation observation ) {
-        return String.format( "%s<br>Description: %s<br>type: %s<br>Truth value: %s", observation.getName( ), observation.getDescription( ).replaceAll( "\'", "&quote;" ), observation.getType( ), observation.getTruthValue( ) );
+        return String.format( "%s<br><b>Description:</b> %s<br><b>type:</b> %s<br><b>Truth value:</b> %s", observation.getLabel( ), observation.getDescription( ).replaceAll( "\'", "&quote;" ), observation.getType( ), observation.getTruthValue( ) );
     }
     
     private static boolean addNode( @NonNull final Concept concept, @NonNull final String id, @NonNull final DotFile dotFile ) {
@@ -191,14 +192,14 @@ public final class GraphWriter {
             }
             jsFile.writeln( String.format( "    const svg_%s = svgdoc_%s.getElementById('%s');", name, graphName, name ) );
             jsFile.writeln( String.format( "    const svg_%s_path = getPath( '%s', nodes_%s, edges_%s, [] );", name, name, graphName, graphName ) );
-            jsFile.writeln( String.format( "    tooltips_event( svg_%s, '%s', '%s', graph_%s, svg_%s_path );", name, priorKnowledgeToHTML( priorKnowledge ), color, graphName, name ) );
+            jsFile.writeln( String.format( "    tooltips_event( svg_%s, '%s', '%s', '%s', graph_%s, svg_%s_path );", name, priorKnowledge.getName() , priorKnowledgeToHTML( priorKnowledge ), color, graphName, name ) );
         }
         else if( concept instanceof Observation ) {
             final Observation observation = ( Observation ) concept;
             color = "White";
             jsFile.writeln( String.format( "    const svg_%s = svgdoc_%s.getElementById('%s');", name, graphName, name ) );
             jsFile.writeln( String.format( "    const svg_%s_path = getPath( '%s', nodes_%s, edges_%s, [] );", name, name, graphName, graphName ) );
-            jsFile.writeln( String.format( "    tooltips_event( svg_%s, '%s', '%s', graph_%s, svg_%s_path );", name, observationToHTML( observation ), color, graphName, name ) );
+            jsFile.writeln( String.format( "    tooltips_event( svg_%s, '%s', '%s', '%s', graph_%s, svg_%s_path );", name, observation.getName() , observationToHTML( observation ), color, graphName, name ) );
         }
     }
     
@@ -321,6 +322,13 @@ public final class GraphWriter {
         outputDir   = outDir;
         tableReport = new TableReport( Paths.get( outputDir, "index.html" ).toFile( ) );
         csvReport   = new CSVReport( Paths.get( outputDir, "results.csv" ).toFile( ) );
+
+        String jsPath1 = ResourceExporter.export( "/js/svg_common.js", outputDir );
+        String jsPath2 = ResourceExporter.export( "/js/list.js",outputDir );
+        String imgClose= ResourceExporter.export( "/img/close.png",  outputDir );
+        LOGGER.debug( "File copied " + jsPath1 );
+        LOGGER.debug( "File copied " + jsPath2 );
+        LOGGER.debug( "File copied " + imgClose );
     }
     
     public void addGraph( @NonNull final PriorKnowledge priorKnowledge, @NonNull Set<Relation> relations ) throws Exception {
