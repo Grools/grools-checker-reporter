@@ -45,6 +45,7 @@ function tooltips_event( node, title, description, color, graph, path ){
   document.body.appendChild(tooltips)
   text = node.getElementsByTagName( 'text' )[0]
   text.addEventListener( 'click',  function( event ) {
+    tooltipsPosition( event, tooltips )
     tooltips.style.display = 'block';
   } );
 
@@ -64,30 +65,13 @@ function startDrag(e) {
     // determine event object
     e=e || window.event;
     // IE uses srcElement, others use target
-    targ = e.target ? e.target : e.srcElement;
+    var targ = e.target ? e.target : e.srcElement;
+    tooltips = targ.closest("div.tooltips")
 
-    if ( hasClass( targ, 'header') ) {
+    if ( tooltips != null ) {
       e.preventDefault();
-      // calculate event X, Y coordinates
-      offsetX = e.clientX;
-      offsetY = e.clientY;
-
-      // assign default values for top and left properties
-      if (!targ.parentNode.style.left) {
-        var tmp = (e.clientX > 10)? e.clientX - 10 : 0;
-        targ.parentNode.style.left = tmp  + 'px';
-      };
-      if (!targ.parentNode.style.top) {
-        var tmp = (e.clientY > 10)? e.clientY - 10 : 0;
-          targ.parentNode.style.top = tmp  + 'px';
-      };
-
-      // calculate integer values for top and left
-      // properties
-      coordX = parseInt(targ.parentNode.style.left);
-      coordY = parseInt(targ.parentNode.style.top);
+      tooltipsPosition( e, tooltips )
       drag = true;
-      //targ.parentNode.addEventListener( 'mousemove', dragDiv , false );
     }
     else if( document.selection )
       document.selection.createRange();
@@ -102,19 +86,19 @@ function dragDiv(e) {
       e.preventDefault();
       // var targ=e.target?e.target:e.srcElement;
       // move div element
-      targ.parentNode.style.left = coordX + e.clientX - offsetX + 'px';
-      targ.parentNode.style.top = coordY + e.clientY - offsetY + 'px';
-      targ.parentNode.addEventListener ('mouseup' , stopDrag , false);
+      tooltips.style.left = coordX + e.clientX - offsetX + 'px';
+      tooltips.style.top = coordY + e.clientY - offsetY + 'px';
+      tooltips.addEventListener ('mouseup' , stopDrag , false);
     };
     return false;
 }
 
 function stopDrag() {
     //targ.parentNode.removeEventListener('mousedown', startDrag, false);
-    targ.parentNode.removeEventListener('mousemove', dragDiv, false);
-    targ.parentNode.removeEventListener('mouseup', stopDrag, false);
+    tooltips.removeEventListener('mousemove', dragDiv, false);
+    tooltips.removeEventListener('mouseup', stopDrag, false);
     drag = false;
-    targ = null;
+    tooltips = null;
 }
 
 function createInformativeNode( node, title, text, color ){
@@ -145,9 +129,25 @@ function createInformativeNode( node, title, text, color ){
 }
 
 
-function tooltipsPosition( event, tooltips, ySshift, xShift ){
-  tooltips.style.top = (event.pageY + ySshift - window.scrollY)+'px';
-  tooltips.style.left= (event.pageX - xShift  - window.scrollX)+'px';
+function tooltipsPosition( event, target ){
+  // calculate event X, Y coordinates
+  offsetX = event.clientX;
+  offsetY = event.clientY;
+
+  // assign default values for top and left properties
+  if (!target.style.left) {
+    var tmp = (offsetX > 10)? offsetX - 10 : 0;
+    target.style.left = tmp  + 'px';
+  };
+  if (!target.parentNode.style.top) {
+    var tmp = (offsetY > 10)? offsetY - 10 : 0;
+      target.style.top = tmp  + 'px';
+  };
+
+  // calculate integer values for top and left
+  // properties
+  coordX = parseInt(target.style.left);
+  coordY = parseInt(target.style.top);
 }
 
 function getPath( node_id, nodes, edges, path ){

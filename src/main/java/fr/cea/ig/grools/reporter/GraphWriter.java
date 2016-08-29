@@ -326,9 +326,11 @@ public final class GraphWriter {
         String jsPath1 = ResourceExporter.export( "/js/svg_common.js", outputDir );
         String jsPath2 = ResourceExporter.export( "/js/list.js",outputDir );
         String imgClose= ResourceExporter.export( "/img/close.png",  outputDir );
+        String cssPath = ResourceExporter.export( "/css/grools.css",  outputDir );
         LOGGER.debug( "File copied " + jsPath1 );
         LOGGER.debug( "File copied " + jsPath2 );
         LOGGER.debug( "File copied " + imgClose );
+        LOGGER.debug( "File copied " + cssPath );
     }
     
     public void addGraph( @NonNull final PriorKnowledge priorKnowledge, @NonNull Set<Relation> relations ) throws Exception {
