@@ -65,12 +65,13 @@ public final class GraphicReport extends WrapFile {
         writeln( "            }" );
         writeln( "            .tooltips  .header{" );
         writeln( "                border: 1px;" );
-        writeln( "                height: 2em;" );
+        writeln( "                height: 3em;" );
         writeln( "                background: grey;" );
         writeln( "            }" );
         writeln( "            .tooltips .header .title {" );
         writeln( "                left: .5em;" );
         writeln( "                top:  .3em;" );
+        writeln( "                padding-right: 1em;" );
         writeln( "                position: absolute;" );
         writeln( "                color: white;" );
         writeln( "            }" );
