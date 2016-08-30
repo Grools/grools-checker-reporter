@@ -63,109 +63,17 @@ import java.util.Map;
 public final class TableReport extends WrapFile {
     private static final Logger LOG = ( Logger ) LoggerFactory.getLogger( TableReport.class );
     
-    private void init( ) throws Exception {
+    private void init( @NonNull final String resourcesDir ) throws Exception {
         final String outputDir = file.getParent( );
         writeln( "<!DOCTYPE html>" );
         writeln( "<html>" );
         writeln( "    <head>" );
         writeln( "        <title>Reporting</title>" );
         writeln( "        <meta charset=\"utf-8\">" );
-        writeln( "        <style type='text/css'>" );
-        writeln( "            td {" );
-        writeln( "                border: 1px solid black;" );
-        writeln( "            }" );
-        writeln( "            #results                                              { width:100%;}" );
-        writeln( "            #results td                                           { padding: 5px 5px 5px 5px;}" );
-        writeln( "            #results tr > td:first-child                          { text-align:left;}" );
-        writeln( "            #results tr > td:first-child + td                     { text-align:justify;}" );
-        writeln( "            #results tr > td:first-child + td + td                { text-align:center;}" );
-        writeln( "            #results tr > td:first-child + td + td + td           { text-align:center;}" );
-        writeln( "            #results tr > td:first-child + td + td + td + td      { text-align:center;}" );
-        writeln( "            #results tr > td:first-child + td + td + td + td + td { text-align:left;}" );
-        writeln( "            .list {" );
-        writeln( "              font-family:sans-serif;" );
-        writeln( "            }" );
-        writeln( "            td {" );
-        writeln( "              padding:10px; " );
-        writeln( "              border:solid 1px #eee;" );
-        writeln( "            }" );
-        writeln( "            input {" );
-        writeln( "              border:solid 1px #ccc;" );
-        writeln( "              border-radius: 5px;" );
-        writeln( "              padding:7px 14px;" );
-        writeln( "              margin-bottom:10px" );
-        writeln( "            }" );
-        writeln( "            input:focus {" );
-        writeln( "              outline:none;" );
-        writeln( "              border-color:#aaa;" );
-        writeln( "            }" );
-        writeln( "            .sort {" );
-        writeln( "              padding:8px 30px;" );
-        writeln( "              border-radius: 6px;" );
-        writeln( "              border:none;" );
-        writeln( "              display:inline-block;" );
-        writeln( "              color:#fff;" );
-        writeln( "              text-decoration: none;" );
-        writeln( "              background-color: #28a8e0;" );
-        writeln( "              height:30px;" );
-        writeln( "            }" );
-        writeln( "            .sort:hover {" );
-        writeln( "              text-decoration: none;" );
-        writeln( "              background-color:#1b8aba;" );
-        writeln( "            }" );
-        writeln( "            .sort:focus {" );
-        writeln( "              outline:none;" );
-        writeln( "            }" );
-        writeln( "            .sort:after {" );
-        writeln( "              display:inline-block;" );
-        writeln( "              width: 0;" );
-        writeln( "              height: 0;" );
-        writeln( "              border-left: 5px solid transparent;" );
-        writeln( "              border-right: 5px solid transparent;" );
-        writeln( "              border-bottom: 5px solid transparent;" );
-        writeln( "              content:\"\";" );
-        writeln( "              position: relative;" );
-        writeln( "              top:-10px;" );
-        writeln( "              right:-5px;" );
-        writeln( "            }" );
-        writeln( "            .sort.asc:after {" );
-        writeln( "              width: 0;" );
-        writeln( "              height: 0;" );
-        writeln( "              border-left: 5px solid transparent;" );
-        writeln( "              border-right: 5px solid transparent;" );
-        writeln( "              border-top: 5px solid #fff;" );
-        writeln( "              content:\"\";" );
-        writeln( "              position: relative;" );
-        writeln( "              top:4px;" );
-        writeln( "              right:-5px;" );
-        writeln( "            }" );
-        writeln( "            .sort.desc:after {" );
-        writeln( "              width: 0;" );
-        writeln( "              height: 0;" );
-        writeln( "              border-left: 5px solid transparent;" );
-        writeln( "              border-right: 5px solid transparent;" );
-        writeln( "              border-bottom: 5px solid #fff;" );
-        writeln( "              content:\"\";" );
-        writeln( "              position: relative;" );
-        writeln( "              top:-4px;" );
-        writeln( "              right:-5px;" );
-        writeln( "            }" );
-        writeln( "        div.button{" );
-        writeln( "            margin: 20px;" );
-        writeln( "        }" );
-        writeln( "        .button a{" );
-        writeln( "            -webkit-appearance: button;" );
-        writeln( "            -moz-appearance: button;" );
-        writeln( "            appearance: button;" );
-        writeln( "            text-decoration: none;" );
-        writeln( "            color: initial;" );
-        writeln( "            margin-bottom: 10px;" );
-        writeln( "        }" );
-        writeln( "        .button input{" );
-        writeln( "            margin-right: 100px;" );
-        writeln( "        }" );
-        writeln( "        </style>" );
-        writeln( "        <script type=\"text/javascript\" src=\"../js/list.js\"></script>" );
+        writeln( "        <meta name=\"author\" content=\"LABGeM - genoscope.cns.fr\">" );
+        writeln( "        <meta name=\"description\" content=\"GROOLS: save time, do more, Graphical viewer\">" );
+        writeln( "        <link rel=\"stylesheet\" type=\"text/css\" href=\"" + resourcesDir + "/css/table.css\">" );
+        writeln( "        <script type=\"text/javascript\" src=\"" + resourcesDir + "js/list.js\"></script>" );
         writeln( "        <script type=\"text/javascript\">" );
         writeln( "          window.onload=function() {" );
         writeln( "            var options = { valueNames: [ 'Prior-Knowledge', 'Description', 'Prediction', 'Expectation', 'Conclusion', 'Leaf Statistics' ] };" );
@@ -181,12 +89,12 @@ public final class TableReport extends WrapFile {
         writeln( "            </div>" );
         writeln( "            <table id=\"resultstable\">" );
         writeln( "                <colgroup>" );
-        writeln( "                    <col width=\"20%\">" );
+        writeln( "                    <col width=\"15%\">" );
         writeln( "                    <col width=\"40%\">" );
         writeln( "                    <col width=\"10%\">" );
         writeln( "                    <col width=\"10%\">" );
         writeln( "                    <col width=\"10%\">" );
-        writeln( "                    <col width=\"10%\">" );
+        writeln( "                    <col width=\"15%\">" );
         writeln( "                </colgroup>" );
         writeln( "                <thead>" );
         writeln( "                <tr>" );
@@ -229,14 +137,14 @@ public final class TableReport extends WrapFile {
         writeln( "                </tr>" );
     }
     
-    public TableReport( @NonNull final String outputDir, @NonNull final String fileName ) throws Exception {
+    public TableReport( @NonNull final String outputDir, @NonNull final String fileName, @NonNull final String jsDir ) throws Exception {
         super( Paths.get( outputDir, fileName ).toFile( ) );
-        init( );
+        init( jsDir );
     }
     
-    public TableReport( final File file ) throws Exception {
+    public TableReport( final File file, @NonNull final String resourcesDir ) throws Exception {
         super( file );
-        init( );
+        init( resourcesDir );
     }
     
     public void close( ) throws IOException {

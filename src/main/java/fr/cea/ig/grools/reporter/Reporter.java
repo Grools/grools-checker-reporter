@@ -65,14 +65,14 @@ import java.util.stream.Collectors;
  */
 /*
  * @startuml
- * class GraphWriter{
+ * class Reporter{
  *  - outputDir :   String
  *  - htmlFile  :   HtmlFile
  * }
  * @enduml
  */
-public final class GraphWriter {
-    private static transient final Logger LOGGER = ( Logger ) LoggerFactory.getLogger( GraphWriter.class );
+public final class Reporter {
+    private static transient final Logger LOGGER = ( Logger ) LoggerFactory.getLogger( Reporter.class );
     private final String      outputDir;
     private final TableReport tableReport;
     private final CSVReport   csvReport;
@@ -247,7 +247,7 @@ public final class GraphWriter {
     }
     
     private String writeTableReport( @NonNull final Path path, @NonNull final Set<Concept> concepts ) throws Exception {
-        final TableReport table = new TableReport( path.toFile( ) );
+        final TableReport table = new TableReport( path.toFile( ), "../" );
         for( final Concept concept : concepts ) {
             if( concept instanceof PriorKnowledge )
                 table.addRow( ( PriorKnowledge ) concept );
@@ -318,19 +318,21 @@ public final class GraphWriter {
         return stats;
     }
 
-    public GraphWriter( @NonNull final String outDir ) throws Exception {
+    public Reporter( @NonNull final String outDir ) throws Exception {
         outputDir   = outDir;
-        tableReport = new TableReport( Paths.get( outputDir, "index.html" ).toFile( ) );
+        tableReport = new TableReport( Paths.get( outputDir, "index.html" ).toFile( ), "./" );
         csvReport   = new CSVReport( Paths.get( outputDir, "results.csv" ).toFile( ) );
 
-        String jsPath1 = ResourceExporter.export( "/js/svg_common.js", outputDir );
-        String jsPath2 = ResourceExporter.export( "/js/list.js",outputDir );
-        String imgClose= ResourceExporter.export( "/img/close.png",  outputDir );
-        String cssPath = ResourceExporter.export( "/css/grools.css",  outputDir );
+        String jsPath1 = ResourceExporter.export( "/js/svg_common.js"   , outputDir );
+        String jsPath2 = ResourceExporter.export( "/js/list.js"         , outputDir );
+        String imgClose= ResourceExporter.export( "/img/close.png"      , outputDir );
+        String cssPath1= ResourceExporter.export( "/css/grools.css"     , outputDir );
+        String cssPath2= ResourceExporter.export( "/css/table.css"      , outputDir );
         LOGGER.debug( "File copied " + jsPath1 );
         LOGGER.debug( "File copied " + jsPath2 );
         LOGGER.debug( "File copied " + imgClose );
-        LOGGER.debug( "File copied " + cssPath );
+        LOGGER.debug( "File copied " + cssPath1 );
+        LOGGER.debug( "File copied " + cssPath2 );
     }
     
     public void addGraph( @NonNull final PriorKnowledge priorKnowledge, @NonNull Set<Relation> relations ) throws Exception {
@@ -340,7 +342,6 @@ public final class GraphWriter {
         outDir.mkdirs( );
         final GraphicReport graphicReport = new GraphicReport( Paths.get( outputDir, graphName, "result_svg.html" ).toString( ) );
         
-        // TODO reporting could be faster by writing row by row for csv,js,dot,html in same time
         final Set<Concept> concepts = relations.stream( )
                                                .map( rel -> Arrays.asList( rel.getSource( ), rel.getTarget( ) ) )
                                                .flatMap( Collection::stream )
