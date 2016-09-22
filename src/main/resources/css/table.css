@@ -4,7 +4,7 @@ td {
 #results                                              { width:100%;}
 #results td                                           { padding: 5px 5px 5px 5px;}
 #results tr > td:first-child                          { text-align:left;}
-#results tr > td:first-child + td                     { text-align:justify;}
+#results tr > td:first-child + td                     { text-align:left;}
 #results tr > td:first-child + td + td                { text-align:center;}
 #results tr > td:first-child + td + td + td           { text-align:center;}
 #results tr > td:first-child + td + td + td + td      { text-align:center;}
