@@ -365,8 +365,8 @@ public final class Reporter {
         final String url         = graphName + "<br>"
                                              + " <a href=\"" + Paths.get( graphName, "result_svg.html" ).toString( )   + "\">SVG</a>"
                                              + " <a href=\"" + Paths.get( graphName, "result_table.html" ).toString( ) + "\">Table</a>";
-        final int    colonIndex  = priorKnowledge.getDescription( ).indexOf( ':' );
-        final String description = ( colonIndex >= 0 ) ? priorKnowledge.getDescription( ).substring( 0, colonIndex )
+        final int    tildeIndex  = priorKnowledge.getDescription( ).indexOf( '~' );
+        final String description = ( tildeIndex >= 0 ) ? priorKnowledge.getDescription( ).substring( 0, tildeIndex )
                                                        : priorKnowledge.getDescription( );
         tableReport.addRow( priorKnowledge, stats, url, description );
         csvReport.addRow( priorKnowledge );
