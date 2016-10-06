@@ -79,73 +79,89 @@ public final class Reporter {
     
     
     private static String colorList( final PriorKnowledge pk ) {
-        return  toColorExp( pk.getExpectation( ) ) + ";0.5:" + toColorPred( pk.getPrediction( ) );
+        return  toApproxExp( pk.getExpectation( ) )[1] + ";0.5:" + toApproxPred( pk.getPrediction( ) )[1];
     }
     
-    private static String toColorPred( final TruthValuePowerSet tvSet ) {
-        String color;
+    private static String[] toApproxPred( final TruthValuePowerSet tvSet ) {
+        final String[] result = new String[2];
         switch( tvSet ) {
             case T:
-                color = "Lime";
+                result[0] = "True";
+                result[1] = "Lime";
                 break;
-            case TF:
-            case TFB:
-            case NTF:
-            case NTFB:
-            case NF:
-            case FB:
-            case NFB:
             case F:
-                color = "Coral";
+                result[0] = "False";
+                result[1] = "Coral";
                 break;
             case NB:
             case NTB:
             case TB:
-            case B:
-                color = "Plum";
-                break;
-            case n:
-            case NT:
-            case N:
-            default:
-                color = "white";
-        }
-        return color;
-    }
-    
-    private static String toColorExp( final TruthValuePowerSet tvSet ) {
-        String color;
-        switch( tvSet ) {
-            case NT:
-            case T:
-                color = "Lime";
-                break;
             case TF:
             case TFB:
             case NTF:
             case NTFB:
-            case NF:
             case FB:
             case NFB:
+            case B:
+                result[0] = "Both";
+                result[1] = "Plum";
+                break;
+            case n:
+            case NT:
+            case NF:
+            case N:
+            default:
+                result[0] = "Unknown";
+                result[1] = "white";
+        }
+        return result;
+    }
+    
+    private static String[] toApproxExp( final TruthValuePowerSet tvSet ) {
+        String[] result = new String[2];
+        switch( tvSet ) {
+            case NT:
+            case T:
+                result[0] = "True";
+                result[1] = "Lime";
+                break;
+            case NF:
             case F:
-                color = "Coral";
+                result[0] = "False";
+                result[1] = "Coral";
                 break;
             case NB:
             case NTB:
             case TB:
+            case TF:
+            case TFB:
+            case NTF:
+            case NTFB:
+            case FB:
+            case NFB:
             case B:
-                color = "Plum";
+                result[0] = "Both";
+                result[1] = "Plum";
                 break;
             case n:
             case N:
             default:
-                color = "white";
+                result[0] = "Unknown";
+                result[1] = "white";
         }
-        return color;
+        return result;
     }
     
     private static String priorKnowledgeToHTML( @NonNull final PriorKnowledge pk ) {
-        return String.format( "<b>Description:</b> %s<br><b>is specific:</b> %s<br><b>is dispensable:</b> %s<br><b>Expectation:</b> %s<br><b>Prediction:</b> %s<br><b>Conclusion:</b> %s",  pk.getDescription( ).replaceAll( "\'", "&quote;" ), pk.getIsSpecific( ) ? "Yes" : "No", pk.getIsDispensable( ) ? "Yes" : "No", pk.getExpectation( ), pk.getPrediction( ), pk.getConclusion( ) );
+        return String.format( "<b>Description:</b> %s<br><b>is specific:</b> %s<br><b>is dispensable:</b> %s,%s<br><b>Expectation:</b> %s<br><b>Prediction:</b> %s,%s<br><b>Conclusion:</b> %s",
+                              pk.getDescription( ).replaceAll( "\'", "&quote;" )    ,
+                              pk.getIsSpecific( ) ? "Yes" : "No"                    ,
+                              pk.getIsDispensable( ) ? "Yes" : "No"                 ,
+                              toApproxExp(pk.getExpectation( ))[0]                  ,
+                              pk.getExpectation( )                                  ,
+                              toApproxPred( pk.getPrediction( ) )[0]                ,
+                              pk.getPrediction( )                                   ,
+                              pk.getConclusion( ) );
     }
     
     private static String observationToHTML( @NonNull final Observation observation ) {
