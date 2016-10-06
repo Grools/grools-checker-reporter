@@ -150,7 +150,7 @@ function tooltipsPosition( event, target ){
   coordY = parseInt(target.style.top);
 }
 
-function getPath( node_id, nodes, edges, path ){
+function getPathChildToParent( node_id, nodes, edges, path ){
     path.push( nodes.filter( n => n.id == node_id )[0] );
     for( var edge_index=0; edge_index < edges.length; edge_index++ ){
         var text        = edges[ edge_index ].getElementsByTagName('title')[0].textContent;
@@ -158,11 +158,30 @@ function getPath( node_id, nodes, edges, path ){
         if( node_id == relations[0] ){
             path.push( nodes.filter( n => n.id == relations[1] )[0] );
             path.push( edges[ edge_index ] )
-            getPath( relations[1], nodes, edges, path );
+            getPathChildToParent( relations[1], nodes, edges, path );
         }
     }
     return path;
 }
+
+
+function getPathParentToChild( node_id, nodes, edges, path ){
+    var parent = nodes.filter( n => n.id == node_id )[0];
+    var child  = null;
+    path.push( parent );
+    for( var edge_index=0; edge_index < edges.length; edge_index++ ){
+        var text        = edges[ edge_index ].getElementsByTagName('title')[0].textContent;
+        var relations   = text.split('->'); // 0: child 1: parent
+        if( node_id == relations[1] ){
+            child = nodes.filter( n => n.id == relations[0] )[0];
+            path.push( child );
+            path.push( edges[ edge_index ] )
+            getPathParentToChild( relations[0], nodes, edges, path );
+        }
+    }
+    return path;
+}
+
 drag=false;
 targ=null;
 document.onmousedown = startDrag;

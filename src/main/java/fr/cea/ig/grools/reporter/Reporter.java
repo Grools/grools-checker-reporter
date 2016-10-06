@@ -153,7 +153,7 @@ public final class Reporter {
     }
     
     private static String priorKnowledgeToHTML( @NonNull final PriorKnowledge pk ) {
-        return String.format( "<b>Description:</b> %s<br><b>is specific:</b> %s<br><b>is dispensable:</b> %s,%s<br><b>Expectation:</b> %s<br><b>Prediction:</b> %s,%s<br><b>Conclusion:</b> %s",
+        return String.format( "<b>Description:</b> %s<br><b>is specific:</b> %s<br><b>is dispensable:</b> %s<br><b>Expectation:</b> %s <br><b>Prediction:</b> %s %s<br><b>Conclusion:</b> %s",
                               pk.getDescription( ).replaceAll( "\'", "&quote;" )    ,
                               pk.getIsSpecific( ) ? "Yes" : "No"                    ,
                               pk.getIsDispensable( ) ? "Yes" : "No"                 ,
@@ -207,14 +207,14 @@ public final class Reporter {
                     break;
             }
             jsFile.writeln( String.format( "    const svg_%s = svgdoc_%s.getElementById('%s');", name, graphName, name ) );
-            jsFile.writeln( String.format( "    const svg_%s_path = getPath( '%s', nodes_%s, edges_%s, [] );", name, name, graphName, graphName ) );
+            jsFile.writeln( String.format( "    const svg_%s_path = getPathParentToChild( '%s', nodes_%s, edges_%s, [] );", name, name, graphName, graphName ) );
             jsFile.writeln( String.format( "    tooltips_event( svg_%s, '%s', '%s', '%s', graph_%s, svg_%s_path );", name, priorKnowledge.getName() , priorKnowledgeToHTML( priorKnowledge ), color, graphName, name ) );
         }
         else if( concept instanceof Observation ) {
             final Observation observation = ( Observation ) concept;
             color = "White";
             jsFile.writeln( String.format( "    const svg_%s = svgdoc_%s.getElementById('%s');", name, graphName, name ) );
-            jsFile.writeln( String.format( "    const svg_%s_path = getPath( '%s', nodes_%s, edges_%s, [] );", name, name, graphName, graphName ) );
+            jsFile.writeln( String.format( "    const svg_%s_path = getPathChildToParent( '%s', nodes_%s, edges_%s, [] );", name, name, graphName, graphName ) );
             jsFile.writeln( String.format( "    tooltips_event( svg_%s, '%s', '%s', '%s', graph_%s, svg_%s_path );", name, observation.getName() , observationToHTML( observation ), color, graphName, name ) );
         }
     }
