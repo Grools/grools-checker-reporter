@@ -114,6 +114,7 @@ function createInformativeNode( node, title, text, color ){
   button.addEventListener( 'click',  function( event ) {
     tooltips.style.display = 'none';
     event.stopPropagation();
+    stopDrag();
   } );
   header.className      = 'header';
   header.appendChild( title_span );
@@ -131,9 +132,11 @@ function createInformativeNode( node, title, text, color ){
 
 function tooltipsPosition( event, target ){
   // calculate event X, Y coordinates
-  offsetX = event.clientX;
-  offsetY = event.clientY;
-
+  var doc       = document.documentElement;
+  var left      = (window.pageXOffset || doc.scrollLeft) - (doc.clientLeft || 0);
+  var top       = (window.pageYOffset || doc.scrollTop)  - (doc.clientTop || 0);
+  var offsetX   = event.clientX - left;
+  var offsetY   = event.clientY - top;
   // assign default values for top and left properties
   if (!target.style.left) {
     var tmp = (offsetX > 10)? offsetX - 10 : 0;
