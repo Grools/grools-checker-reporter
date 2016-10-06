@@ -65,30 +65,34 @@ function startDrag(e) {
     // determine event object
     e=e || window.event;
     // IE uses srcElement, others use target
-    var targ = e.target ? e.target : e.srcElement;
-    tooltips = targ.closest("div.tooltips")
-
-    if ( tooltips != null ) {
-      e.preventDefault();
-      tooltipsPosition( e, tooltips )
-      drag = true;
+    const targ = e.target ? e.target : e.srcElement;
+    if( ! drag ){
+        tooltips = targ.closest("div.tooltips");
+        if ( tooltips != null ) {
+          e.preventDefault();
+          tooltipsPosition( e, tooltips )
+          drag = true;
+        }
+        else if( document.selection )
+          document.selection.createRange();
     }
-    else if( document.selection )
-      document.selection.createRange();
     return false;
 
 }
 
 function dragDiv(e) {
     if (drag) {
-      e=e || window.event;
-      e.stopPropagation()
-      e.preventDefault();
-      // var targ=e.target?e.target:e.srcElement;
-      // move div element
-      tooltips.style.left = coordX + e.clientX - offsetX + 'px';
-      tooltips.style.top = coordY + e.clientY - offsetY + 'px';
-      tooltips.addEventListener ('mouseup' , stopDrag , false);
+        e=e || window.event;
+        e.stopPropagation()
+        e.preventDefault();
+        // var targ=e.target?e.target:e.srcElement;
+        // move div element
+        computeOffset(e);
+        const coordX = (e.clientX - scrollLeft > 10)? e.clientX - scrollLeft - 10 : 0;
+        const coordY = (e.clientY - scrollTop > 10)? e.clientY - scrollTop - 10 : 0;
+        tooltips.style.left   = coordX  + 'px';
+        tooltips.style.top    = coordY   + 'px';
+        tooltips.addEventListener ('mouseup' , stopDrag , false);
     };
     return false;
 }
@@ -102,12 +106,12 @@ function stopDrag() {
 }
 
 function createInformativeNode( node, title, text, color ){
-  var tooltips          = document.createElement('div');
-  var header            = document.createElement('div');
-  var title_span        = document.createElement('span');
-  var button            = document.createElement('button');
-  var button_img        = document.createElement('span');
-  var p                 = document.createElement('p');
+  const tooltips       = document.createElement('div');
+  const header         = document.createElement('div');
+  const title_span     = document.createElement('span');
+  const button         = document.createElement('button');
+  const button_img     = document.createElement('span');
+  const p              = document.createElement('p');
   title_span.innerHTML = title;
   title_span.className = 'title';
   button.appendChild( button_img );
@@ -129,28 +133,28 @@ function createInformativeNode( node, title, text, color ){
   return tooltips;
 }
 
+function computeOffset( event ){
+    if (doc == null )
+        doc = document.documentElement;
+    const scrollLeft  = (window.pageXOffset || doc.scrollLeft) - (doc.clientLeft || 0);
+    const scrollTop   = (window.pageYOffset || doc.scrollTop)  - (doc.clientTop || 0);
+    offsetX     = event.clientX - scrollLeft;
+    offsetY     = event.clientY - scrollTop;
+}
+
 
 function tooltipsPosition( event, target ){
   // calculate event X, Y coordinates
-  var doc       = document.documentElement;
-  var left      = (window.pageXOffset || doc.scrollLeft) - (doc.clientLeft || 0);
-  var top       = (window.pageYOffset || doc.scrollTop)  - (doc.clientTop || 0);
-  var offsetX   = event.clientX - left;
-  var offsetY   = event.clientY - top;
+  computeOffset( event );
   // assign default values for top and left properties
   if (!target.style.left) {
-    var tmp = (offsetX > 10)? offsetX - 10 : 0;
-    target.style.left = tmp  + 'px';
-  };
+    const coordX = (offsetX > 10)? offsetX - 10 : 0;
+    target.style.left = coordX  + 'px';
+  }
   if (!target.parentNode.style.top) {
-    var tmp = (offsetY > 10)? offsetY - 10 : 0;
-      target.style.top = tmp  + 'px';
-  };
-
-  // calculate integer values for top and left
-  // properties
-  coordX = parseInt(target.style.left);
-  coordY = parseInt(target.style.top);
+    const coordY = (offsetY > 10)? offsetY - 10 : 0;
+    target.style.top = coordY  + 'px';
+  }
 }
 
 function getPathChildToParent( node_id, nodes, edges, path ){
@@ -169,14 +173,13 @@ function getPathChildToParent( node_id, nodes, edges, path ){
 
 
 function getPathParentToChild( node_id, nodes, edges, path ){
-    var parent = nodes.filter( n => n.id == node_id )[0];
-    var child  = null;
+    const parent = nodes.filter( n => n.id == node_id )[0];
     path.push( parent );
     for( var edge_index=0; edge_index < edges.length; edge_index++ ){
-        var text        = edges[ edge_index ].getElementsByTagName('title')[0].textContent;
-        var relations   = text.split('->'); // 0: child 1: parent
+        const text        = edges[ edge_index ].getElementsByTagName('title')[0].textContent;
+        const relations   = text.split('->'); // 0: child 1: parent
         if( node_id == relations[1] ){
-            child = nodes.filter( n => n.id == relations[0] )[0];
+            const child = nodes.filter( n => n.id == relations[0] )[0];
             path.push( child );
             path.push( edges[ edge_index ] )
             getPathParentToChild( relations[0], nodes, edges, path );
@@ -185,7 +188,13 @@ function getPathParentToChild( node_id, nodes, edges, path ){
     return path;
 }
 
-drag=false;
-targ=null;
+doc         = null;
+scrollLeft  = 0;
+scrollTop   = 0;
+offsetX     = 0;
+offsetY     = 0;
+tooltips    = null;
+drag        = false;
+targ        = null;
 document.onmousedown = startDrag;
 document.onmousemove = dragDiv;
