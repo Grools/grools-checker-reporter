@@ -153,7 +153,7 @@ public final class Reporter {
     }
     
     private static String priorKnowledgeToHTML( @NonNull final PriorKnowledge pk ) {
-        return String.format( "<b>Description:</b> %s<br><b>is specific:</b> %s<br><b>is dispensable:</b> %s<br><b>Expectation:</b> %s %s<br><b>Prediction:</b> %s %s<br><b>Conclusion:</b> %s",
+        return String.format( "<b>Description:</b> %s<br><b>is specific:</b> %s<br><b>is dispensable:</b> %s<br><b>Expectation:</b> %s - %s<br><b>Prediction:</b> %s - %s<br><b>Conclusion:</b> %s",
                               pk.getDescription( ).replaceAll( "\'", "&quote;" )    ,
                               pk.getIsSpecific( ) ? "Yes" : "No"                    ,
                               pk.getIsDispensable( ) ? "Yes" : "No"                 ,
