@@ -52,6 +52,8 @@ public final class DotNode {
             sb.append( " label=\""+ label +"\"" );
         if( fillcolor != null )
             sb.append( " fillcolor=\""+ fillcolor +"\"" );
+        if( color != null )
+            sb.append( " color=\""+ color +"\"" );
         if( shape != null )
             sb.append( " shape=\""+ shape +"\"" );
         if( style != null )
