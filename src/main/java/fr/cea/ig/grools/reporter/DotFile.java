@@ -35,6 +35,7 @@ package fr.cea.ig.grools.reporter;
 
 
 import fr.cea.ig.grools.common.WrapFile;
+import lombok.NonNull;
 
 import java.io.*;
 
@@ -59,12 +60,12 @@ public final class DotFile extends WrapFile {
 
     private void init( ) throws IOException {
         writeln( "digraph " + graphName + " {" );
-        writeln( "  orientation=landscape;" );
-        writeln( "  rankdir=LR;" );
-        writeln( "  orientation=-90;" );
+        writeln( "  orientation = landscape;" );
+        writeln( "  rankdir     = LR;" );
+        writeln( "  orientation = -90;" );
+        writeln( "  rankdir     = BT;" );
         writeln( "  edge[ color=grey, penwidth=0.75, fontcolor=darkred, fontsize=10];" );
-        writeln( "  rankdir=BT" );
-        writeln( "  node[shape=\"box\" style=\"filled, rounded\" fontcolor=blue ]" );
+        writeln( "  node[ fontcolor=blue ];" );
     }
 
     public DotFile( final String gName, final String filepath ) throws IOException {
@@ -85,6 +86,16 @@ public final class DotFile extends WrapFile {
         super.close( );
     }
 
+    public void addNode( @NonNull final DotNode dotNode ){
+        try {
+            writeln( dotNode.toString() );
+        }
+        catch( IOException e ) {
+            e.printStackTrace( );
+        }
+    }
+
+    @Deprecated
     public void addNode( final String uniqueNodeName, final String color ) {
         addNode( uniqueNodeName, color, "" );
     }
@@ -94,6 +105,7 @@ public final class DotFile extends WrapFile {
         addNode( uniqueNodeName, label, color, shape );
     }
 
+    @Deprecated
     public void addNode( final String uniqueNodeName, final String label, final String color, final String shape ) {
         try {
             if( shape.isEmpty( ) )

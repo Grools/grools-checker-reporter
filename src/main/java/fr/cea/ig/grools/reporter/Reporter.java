@@ -170,16 +170,29 @@ public final class Reporter {
     
     private static boolean addNode( @NonNull final Concept concept, @NonNull final String id, @NonNull final DotFile dotFile ) {
         boolean status = false;
+        final DotNode.DotNodeBuilder nodeBuilder = new DotNode.DotNodeBuilder();
+        nodeBuilder.id( id )
+                   .label( concept.getName() );
         if( concept instanceof PriorKnowledge ) {
             final PriorKnowledge pk = ( PriorKnowledge ) concept;
-            dotFile.addNode( id, colorList( pk ), "box" );
+            nodeBuilder.fillcolor( colorList( pk ) )
+                       .shape( "box" )
+                       .style( "filled" )
+                       .style( "rounded" );
+            if( pk.getPrediction().equals( TruthValuePowerSet.T ) && pk.getIsSpecific() )
+                nodeBuilder.color( "yellow" );
+            else
+                nodeBuilder.color( "black" );
+            if( pk.getIsDispensable() )
+                nodeBuilder.style( "dashed" );
             status = true;
         }
         else if( concept instanceof Observation ) {
             final Observation o = ( Observation ) concept;
-            dotFile.addNode( id, o.getName( ), ( o.getTruthValue( ) == TruthValue.t ) ? "Lime" : "Coral", "oval" );
+            nodeBuilder.fillcolor(  ( o.getTruthValue( ) == TruthValue.t ) ? "Lime" : "Coral" ).shape( "oval" );
             status = true;
         }
+        dotFile.addNode( nodeBuilder.build()  );
         return status;
     }
     
