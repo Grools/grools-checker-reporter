@@ -66,10 +66,11 @@ function startDrag(e) {
     e=e || window.event;
     // IE uses srcElement, others use target
     const targ = e.target ? e.target : e.srcElement;
+    const parent = targ.parentNode;
     if( ! drag ){
-        tooltips = targ.closest("div.tooltips");
-        if ( tooltips != null ) {
+        if( hasClass(parent, 'tooltips') && hasClass(targ, 'header') ) {
           e.preventDefault();
+          tooltips = parent;
           tooltipsPosition( e, tooltips )
           drag = true;
         }
@@ -77,7 +78,6 @@ function startDrag(e) {
           document.selection.createRange();
     }
     return false;
-
 }
 
 function dragDiv(e) {
