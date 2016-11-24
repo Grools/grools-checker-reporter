@@ -74,8 +74,19 @@ function startDrag(e) {
           tooltipsPosition( e, tooltips )
           drag = true;
         }
-        else if( document.selection )
-          document.selection.createRange();
+        else if( window.getSelection ){
+            const sel = window.getSelection();
+            const range = document.createRange();
+            range.selectNode(targ);
+            sel.removeAllRanges();
+            sel.addRange(range);
+        }
+        else if( document.selection ){
+            document.selection.empty();
+            const range = document.body.createTextRange();
+            range.moveToElementText(targ);
+            range.select();
+        }
     }
     return false;
 }
@@ -98,11 +109,15 @@ function dragDiv(e) {
 }
 
 function stopDrag() {
-    //targ.parentNode.removeEventListener('mousedown', startDrag, false);
-    tooltips.removeEventListener('mousemove', dragDiv, false);
-    tooltips.removeEventListener('mouseup', stopDrag, false);
-    drag = false;
-    tooltips = null;
+    if( tooltips != null ){
+        //targ.parentNode.removeEventListener('mousedown', startDrag, false);
+        tooltips.removeEventListener('mousemove', dragDiv, false);
+        tooltips.removeEventListener('mouseup', stopDrag, false);
+        drag = false;
+        tooltips = null;
+    }
+    else if( drag == true )
+        drag = false
 }
 
 function createInformativeNode( node, title, text, color ){
