@@ -190,7 +190,9 @@ public final class Reporter {
         else if( concept instanceof Observation ) {
             final Observation o = ( Observation ) concept;
             final String fillcolor = ( o.getTruthValue( ) == TruthValue.t ) ? "Lime" : "Coral";
-            nodeBuilder.fillcolor( fillcolor ).shape( "oval" );
+            nodeBuilder.fillcolor( fillcolor )
+                       .shape( "oval" )
+                       .style( "filled" );
             status = true;
         }
         dotFile.addNode( nodeBuilder.build()  );
