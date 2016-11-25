@@ -86,9 +86,9 @@ public final class DotFile extends WrapFile {
         super.close( );
     }
 
-    public void addNode( @NonNull final DotNode dotNode ){
+    public void addNode( @NonNull final DotAttribute dotAttribute ){
         try {
-            writeln( dotNode.toString() );
+            writeln( dotAttribute.toString( ) );
         }
         catch( IOException e ) {
             e.printStackTrace( );
@@ -118,6 +118,16 @@ public final class DotFile extends WrapFile {
         }
     }
 
+    public void linkNode( final String parent, final String child, final DotAttribute attribute ) {
+        try {
+            writeln( "  " + parent.replace( ' ', '_' ) + " -> " + child + attribute.toString() );
+        }
+        catch( IOException e ) {
+            e.printStackTrace( );
+        }
+    }
+
+    @Deprecated
     public void linkNode( final String parent, final String child, final String label ) {
         try {
             writeln( "  " + parent.replace( ' ', '_' ) + " -> " + child + " [ label=\"" + label + "\"];" );

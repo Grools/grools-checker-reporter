@@ -44,6 +44,8 @@ import fr.cea.ig.grools.fact.Relation;
 import fr.cea.ig.grools.logic.Conclusion;
 import fr.cea.ig.grools.logic.TruthValue;
 import fr.cea.ig.grools.logic.TruthValuePowerSet;
+import fr.cea.ig.grools.reasoner.Mode;
+import fr.cea.ig.grools.reasoner.VariantMode;
 import lombok.NonNull;
 import org.slf4j.LoggerFactory;
 
@@ -66,16 +68,18 @@ import java.util.stream.Collectors;
 /*
  * @startuml
  * class Reporter{
- *  - outputDir :   String
- *  - htmlFile  :   HtmlFile
+ *  - outputDir   : String
+ *  - tableReport : TableReport
+ *  - csvReport   : CSVReport
  * }
  * @enduml
  */
 public final class Reporter {
     private static transient final Logger LOGGER = ( Logger ) LoggerFactory.getLogger( Reporter.class );
-    private final String      outputDir;
-    private final TableReport tableReport;
-    private final CSVReport   csvReport;
+    private final String        outputDir;
+    private final TableReport   tableReport;
+    private final CSVReport     csvReport;
+    private final Mode          mode;
     
     
     private static String colorList( final PriorKnowledge pk ) {
@@ -170,32 +174,29 @@ public final class Reporter {
     
     private static boolean addNode( @NonNull final Concept concept, @NonNull final String id, @NonNull final DotFile dotFile ) {
         boolean status = false;
-        final DotNode.DotNodeBuilder nodeBuilder = new DotNode.DotNodeBuilder();
-        nodeBuilder.id( id )
-                   .label( concept.getName() );
+        final DotAttribute.DotAttributeBuilder attribute = new DotAttribute.DotAttributeBuilder();
+        attribute.id( id )
+                 .label( concept.getName() );
         if( concept instanceof PriorKnowledge ) {
             final PriorKnowledge pk = ( PriorKnowledge ) concept;
-            nodeBuilder.fillcolor( colorList( pk ) )
-                       .shape( "box" )
-                       .style( "filled" )
-                       .style( "rounded" );
-            if( pk.getPrediction().equals( TruthValuePowerSet.T ) && pk.getIsSpecific() )
-                nodeBuilder.color( "yellow" );
-            else
-                nodeBuilder.color( "black" );
+            attribute.fillcolor( colorList( pk ) )
+                     .shape( "box" )
+                     .style( "filled" )
+                     .style( "rounded" )
+                     .color( "black" );
             if( pk.getIsDispensable() )
-                nodeBuilder.style( "dashed" );
+                attribute.style( "dashed" );
             status = true;
         }
         else if( concept instanceof Observation ) {
             final Observation o = ( Observation ) concept;
             final String fillcolor = ( o.getTruthValue( ) == TruthValue.t ) ? "Lime" : "Coral";
-            nodeBuilder.fillcolor( fillcolor )
-                       .shape( "oval" )
-                       .style( "filled" );
+            attribute.fillcolor( fillcolor )
+                     .shape( "oval" )
+                     .style( "filled" );
             status = true;
         }
-        dotFile.addNode( nodeBuilder.build()  );
+        dotFile.addNode( attribute.build()  );
         return status;
     }
     
@@ -256,7 +257,11 @@ public final class Reporter {
             final Concept target   = relation.getTarget( );
             final String  sourceId = underscoretify( source.getName( ) );
             final String  targetId = underscoretify( target.getName( ) );
-            dotFile.linkNode( sourceId, targetId, relation.getType( ).toString( ) );
+            final DotAttribute.DotAttributeBuilder attribute = new DotAttribute.DotAttributeBuilder();
+            attribute.label( relation.getType( ).toString( ) );
+            if( mode.getVariants().contains( VariantMode.SPECIFIC ) && source instanceof PriorKnowledge && ((PriorKnowledge)source).getIsSpecific( ) )
+                attribute.color( "black" );
+            dotFile.linkNode( sourceId, targetId, attribute.build() );
         }
         
         dotFile.close( );
@@ -350,10 +355,11 @@ public final class Reporter {
         return stats;
     }
 
-    public Reporter( @NonNull final String outDir ) throws Exception {
+    public Reporter( @NonNull final String outDir, @NonNull final Mode reasonerMode ) throws Exception {
         outputDir   = outDir;
         tableReport = new TableReport( Paths.get( outputDir, "index.html" ).toFile( ), "./" );
         csvReport   = new CSVReport( Paths.get( outputDir, "results.csv" ).toFile( ) );
+        mode        = reasonerMode;
 
         String jsPath1 = ResourceExporter.export( "/js/svg_common.js"   , outputDir );
         String jsPath2 = ResourceExporter.export( "/js/list.js"         , outputDir );
