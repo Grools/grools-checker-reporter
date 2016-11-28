@@ -47,12 +47,16 @@ public final class DotAttribute {
 
     @Override
     public String toString(){
-        final StringBuilder sb = new StringBuilder( " " + id + " [ id=\"" + id + "\"" );
+        final StringBuilder sb = new StringBuilder( " " );
+        if( id != null )
+            sb.append( " " + id + " [ id=\"" + id + "\"" );
+        else
+            sb.append( " [ " );
         if( label != null )
             sb.append( " label=\""+ label +"\"" );
         if( fillcolor != null )
             sb.append( " fillcolor=\""+ fillcolor +"\"" );
-        if( fillcolor != null )
+        if( color != null )
             sb.append( " color=\""+ color +"\"" );
         if( shape != null )
             sb.append( " shape=\""+ shape +"\"" );
