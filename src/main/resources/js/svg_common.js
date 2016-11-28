@@ -27,7 +27,7 @@ function hasClass(el, className) {
 }
 
 function addClass(el, className) {
-  if( typeof el == 'undefined' ){
+  if( typeof el != 'undefined' ){
       if (el.classList)
         el.classList.add(className);
       else if (!hasClass(el, className))
@@ -36,7 +36,7 @@ function addClass(el, className) {
 }
 
 function removeClass(el, className) {
-  if( typeof el == 'undefined' ){
+  if( typeof el != 'undefined' ){
       if (el.classList)
         el.classList.remove(className);
       else if (hasClass(el, className)) {
@@ -49,10 +49,10 @@ function removeClass(el, className) {
 function tooltips_event( node, title, description, color, graph, path ){
   const tooltips = createInformativeNode(node, title, description, color );
   var isSelected = false;
-  document.body.appendChild(tooltips)
-  text = node.getElementsByTagName( 'text' )[0]
+  document.body.appendChild(tooltips);
+  text = node.getElementsByTagName( 'text' )[0];
   text.addEventListener( 'click',  function( event ) {
-    tooltipsPosition( event, tooltips )
+    tooltipsPosition( event, tooltips );
     tooltips.style.display = 'block';
   } );
 
@@ -62,7 +62,7 @@ function tooltips_event( node, title, description, color, graph, path ){
           if( path.hasObject( item ) )
               item.style.opacity = 1;
           else
-              item.style.opacity = 0.5
+              item.style.opacity = 0.5;
       }  );
     }
   } );
@@ -78,7 +78,7 @@ function startDrag(e) {
         if( hasClass(parent, 'tooltips') && hasClass(targ, 'header') ) {
           e.preventDefault();
           tooltips = parent;
-          tooltipsPosition( e, tooltips )
+          tooltipsPosition( e, tooltips );
           drag = true;
         }
         else if( window.getSelection ){
@@ -94,6 +94,7 @@ function startDrag(e) {
             range.moveToElementText(targ);
             range.select();
         }
+        document.execCommand("copy");
     }
     return false;
 }
