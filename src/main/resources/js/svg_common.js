@@ -92,14 +92,16 @@ function tooltips_event( node, title, description, color, graph, path ){
     }, false );
 
     header.addEventListener( 'mousedown', function(e){
-        let movement = move(tooltips, e.clientX, e.clientY);
-        //addClass( tooltips, 'disableTextSelection' );
-        drag = {
-            elem: tooltips,
-            x: movement.x,
-            y: movement.y,
-            state: true
-        };
+        if ( ! hasClass( e.target, 'title') ){
+            let movement = move(tooltips, e.clientX, e.clientY);
+            //addClass( tooltips, 'disableTextSelection' );
+            drag = {
+                elem: tooltips,
+                x: movement.x,
+                y: movement.y,
+                state: true
+            };
+        }
     }, false );
 
     node.addEventListener( 'click',  function( event ) {
