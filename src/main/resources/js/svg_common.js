@@ -93,6 +93,7 @@ function tooltips_event( node, title, description, color, graph, path ){
 
     header.addEventListener( 'mousedown', function(e){
         let movement = move(tooltips, e.clientX, e.clientY);
+        //addClass( tooltips, 'disableTextSelection' );
         drag = {
             elem: tooltips,
             x: movement.x,
@@ -183,7 +184,9 @@ document.onmousedown=function(e){
 }
 
 document.onmousemove=function(e){
-    if( drag.state ){
+    if( drag.state && ! hasClass( e.target, 'title') ){
+        if( ! hasClass( drag.elem, 'disableTextSelection' ) );
+            addClass( drag.elem, 'disableTextSelection' );
         const movement          = move( drag.elem, e.clientX, e.clientY );
         drag.elem.style.left    = movement.x  + 'px';
         drag.elem.style.top     = movement.y  + 'px';
@@ -191,6 +194,7 @@ document.onmousemove=function(e){
 }
 document.onmouseup=function(e){
     if( drag.state ){
+        removeClass( drag.elem, 'disableTextSelection' );
         drag = {
             elem: null,
             x: 0,
