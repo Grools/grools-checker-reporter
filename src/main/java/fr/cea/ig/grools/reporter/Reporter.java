@@ -44,6 +44,7 @@ import fr.cea.ig.grools.fact.Relation;
 import fr.cea.ig.grools.logic.Conclusion;
 import fr.cea.ig.grools.logic.TruthValue;
 import fr.cea.ig.grools.logic.TruthValuePowerSet;
+import fr.cea.ig.grools.logic.TruthValueSet;
 import fr.cea.ig.grools.reasoner.Mode;
 import fr.cea.ig.grools.reasoner.VariantMode;
 import lombok.NonNull;

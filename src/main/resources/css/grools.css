@@ -3,6 +3,8 @@
     position: fixed;
     border:     2px outset black;
     background: white;
+    max-width: 40%;
+    min-width: 20%;
 }
 
 .tooltips > .header{

@@ -1,3 +1,13 @@
+var drag = {
+    elem: null,
+    x: 0,
+    y: 0,
+    state: false
+};
+var delta = {
+    x: 0,
+    y: 0
+};
 
 Array.prototype.hasObject = (
   !Array.indexOf ? function (o)
@@ -45,87 +55,75 @@ function removeClass(el, className) {
       }
   }
 }
+function move( tooltips, x , y ){
+    const shift  = computeShift(x, y);
+    let coordX   = 0;
+    let coordY   = 0;
+    if (!tooltips.style.left)
+        coordX = (shift.x > 30)? shift.x - 30 : 0;
+    else
+        coordX = (shift.x - shift.left > 30)? shift.x - shift.left - 30 : 0;
+    if (!tooltips.style.top)
+        coordY = (shift.y > 30)? shift.y - 30 : 0;
+    else
+        coordY = (shift.y - shift.top > 30)? shift.y - shift.top - 30 : 0;
+    return { x: coordX, y: coordY};
+}
 
 function tooltips_event( node, title, description, color, graph, path ){
-  const tooltips = createInformativeNode(node, title, description, color );
-  var isSelected = false;
-  document.body.appendChild(tooltips);
-  text = node.getElementsByTagName( 'text' )[0];
-  text.addEventListener( 'click',  function( event ) {
-    tooltipsPosition( event, tooltips );
-    tooltips.style.display = 'block';
-  } );
+    const tooltips = createInformativeNode(node, title, description, color );
+    document.body.appendChild(tooltips);
+    const text      = node.getElementsByTagName( 'text' )[0];
+    const button    = tooltips.getElementsByTagName("button")[0];
+    const header    = tooltips.getElementsByClassName("header")[0];
 
-  node.addEventListener( 'click',  function( event ) {
-    if( event.target.nodeName != 'text' ){
-      graph.forEach( function( item ){
-          if( path.hasObject( item ) )
-              item.style.opacity = 1;
-          else
-              item.style.opacity = 0.5;
-      }  );
-    }
-  } );
-}
+    text.addEventListener( 'click',  function( event ) {
+        tooltips.style.display = 'block';
+    } );
 
-function startDrag(e) {
-    // determine event object
-    e=e || window.event;
-    // IE uses srcElement, others use target
-    const targ = e.target ? e.target : e.srcElement;
-    const parent = targ.parentNode;
-    if( ! drag ){
-        if( hasClass(parent, 'tooltips') && hasClass(targ, 'header') ) {
-          e.preventDefault();
-          tooltips = parent;
-          tooltipsPosition( e, tooltips );
-          drag = true;
+    button.addEventListener( 'click',  function( event ) {
+        tooltips.style.display = 'none';
+        drag = {
+            elem: null,
+            x: 0,
+            y: 0,
+            state: false
+        };
+    }, false );
+
+    header.addEventListener( 'mousedown', function(e){
+        let movement = move(tooltips, e.clientX, e.clientY);
+        drag = {
+            elem: tooltips,
+            x: movement.x,
+            y: movement.y,
+            state: true
+        };
+    }, false );
+
+    node.addEventListener( 'click',  function( event ) {
+        if( event.target.nodeName != 'text' ){
+          graph.forEach( function( item ){
+                if( path.hasObject( item ) )
+                    item.style.opacity = 1;
+                else
+                    item.style.opacity = 0.5;
+          }  );
         }
-        else if( window.getSelection ){
-            const sel = window.getSelection();
-            const range = document.createRange();
-            range.selectNode(targ);
-            sel.removeAllRanges();
-            sel.addRange(range);
-        }
-        else if( document.selection ){
-            document.selection.empty();
-            const range = document.body.createTextRange();
-            range.moveToElementText(targ);
-            range.select();
-        }
-        document.execCommand("copy");
-    }
-    return false;
+    } );
 }
-
-function dragDiv(e) {
-    if (drag) {
-        e=e || window.event;
-        e.stopPropagation()
-        e.preventDefault();
-        // var targ=e.target?e.target:e.srcElement;
-        // move div element
-        computeOffset(e);
-        const coordX = (e.clientX - scrollLeft > 10)? e.clientX - scrollLeft - 10 : 0;
-        const coordY = (e.clientY - scrollTop > 10)? e.clientY - scrollTop - 10 : 0;
-        tooltips.style.left   = coordX  + 'px';
-        tooltips.style.top    = coordY   + 'px';
-        tooltips.addEventListener ('mouseup' , stopDrag , false);
-    };
-    return false;
-}
-
-function stopDrag() {
-    if( tooltips != null ){
-        //targ.parentNode.removeEventListener('mousedown', startDrag, false);
-        tooltips.removeEventListener('mousemove', dragDiv, false);
-        tooltips.removeEventListener('mouseup', stopDrag, false);
-        drag = false;
-        tooltips = null;
-    }
-    else if( drag == true )
-        drag = false
+function computeShift( clientX, clientY ){
+    const doc           = document.documentElement;
+    const scrollLeft    = (window.pageXOffset || doc.scrollLeft) - (doc.clientLeft || 0);
+    const scrollTop     = (window.pageYOffset || doc.scrollTop)  - (doc.clientTop  || 0);
+    const offsetX       = clientX - scrollLeft;
+    const offsetY       = clientY - scrollTop;
+    return {
+            x:      offsetX,
+            y:      offsetY,
+            left:   scrollLeft,
+            top:    scrollTop
+           };
 }
 
 function createInformativeNode( node, title, text, color ){
@@ -138,11 +136,6 @@ function createInformativeNode( node, title, text, color ){
   title_span.innerHTML = title;
   title_span.className = 'title';
   button.appendChild( button_img );
-  button.addEventListener( 'click',  function( event ) {
-    tooltips.style.display = 'none';
-    event.stopPropagation();
-    stopDrag();
-  } );
   header.className      = 'header';
   header.appendChild( title_span );
   header.appendChild( button );
@@ -152,32 +145,7 @@ function createInformativeNode( node, title, text, color ){
   tooltips.appendChild( header );
   p.innerHTML           = text;
   tooltips.appendChild( p );
-  //tooltips.addEventListener( 'mousedown', startDrag , false );
   return tooltips;
-}
-
-function computeOffset( event ){
-    if (doc == null )
-        doc = document.documentElement;
-    const scrollLeft  = (window.pageXOffset || doc.scrollLeft) - (doc.clientLeft || 0);
-    const scrollTop   = (window.pageYOffset || doc.scrollTop)  - (doc.clientTop || 0);
-    offsetX     = event.clientX - scrollLeft;
-    offsetY     = event.clientY - scrollTop;
-}
-
-
-function tooltipsPosition( event, target ){
-  // calculate event X, Y coordinates
-  computeOffset( event );
-  // assign default values for top and left properties
-  if (!target.style.left) {
-    const coordX = (offsetX > 10)? offsetX - 10 : 0;
-    target.style.left = coordX  + 'px';
-  }
-  if (!target.parentNode.style.top) {
-    const coordY = (offsetY > 10)? offsetY - 10 : 0;
-    target.style.top = coordY  + 'px';
-  }
 }
 
 function getPathChildToParent( node_id, nodes, edges, path ){
@@ -211,13 +179,23 @@ function getPathParentToChild( node_id, nodes, edges, path ){
     return path;
 }
 
-doc         = null;
-scrollLeft  = 0;
-scrollTop   = 0;
-offsetX     = 0;
-offsetY     = 0;
-tooltips    = null;
-drag        = false;
-targ        = null;
-document.onmousedown = startDrag;
-document.onmousemove = dragDiv;
+document.onmousedown=function(e){
+}
+
+document.onmousemove=function(e){
+    if( drag.state ){
+        const movement          = move( drag.elem, e.clientX, e.clientY );
+        drag.elem.style.left    = movement.x  + 'px';
+        drag.elem.style.top     = movement.y  + 'px';
+    }
+}
+document.onmouseup=function(e){
+    if( drag.state ){
+        drag = {
+            elem: null,
+            x: 0,
+            y: 0,
+            state: false
+        };
+    }
+}
