@@ -1,12 +1,6 @@
 var drag = {
     elem: null,
-    x: 0,
-    y: 0,
     state: false
-};
-var delta = {
-    x: 0,
-    y: 0
 };
 
 Array.prototype.hasObject = (
@@ -27,11 +21,21 @@ Array.prototype.hasObject = (
   }
 );
 
+function pauseEvent(e){
+    if(e.stopPropagation) e.stopPropagation();
+    if(e.preventDefault) e.preventDefault();
+    e.cancelBubble=true;
+    e.returnValue=false;
+    return false;
+}
+
 function hasClass(el, className) {
   if( typeof el == 'undefined' )
     return false;
   else if (el.classList)
     return el.classList.contains(className);
+  else if( typeof el.className == 'undefined' )
+    return false;
   else
     return !!el.className.match(new RegExp('(\\s|^)' + className + '(\\s|$)'));
 }
@@ -57,16 +61,10 @@ function removeClass(el, className) {
 }
 function move( tooltips, x , y ){
     const shift  = computeShift(x, y);
-    let coordX   = 0;
-    let coordY   = 0;
-    if (!tooltips.style.left)
-        coordX = (shift.x > 30)? shift.x - 30 : 0;
-    else
-        coordX = (shift.x - shift.left > 30)? shift.x - shift.left - 30 : 0;
-    if (!tooltips.style.top)
-        coordY = (shift.y > 30)? shift.y - 30 : 0;
-    else
-        coordY = (shift.y - shift.top > 30)? shift.y - shift.top - 30 : 0;
+    const tmpX   = shift.left + shift.x;
+    const tmpY   = shift.y + shift.top
+    const coordX = ( tmpX > 30) ? tmpX - 30 : 0;
+    const coordY = ( tmpY > 30) ? tmpY - 30 : 0;
     return { x: coordX, y: coordY};
 }
 
@@ -85,20 +83,17 @@ function tooltips_event( node, title, description, color, graph, path ){
         tooltips.style.display = 'none';
         drag = {
             elem: null,
-            x: 0,
-            y: 0,
             state: false
         };
     }, false );
 
     header.addEventListener( 'mousedown', function(e){
         if ( ! hasClass( e.target, 'title') ){
+            pauseEvent(e);
             let movement = move(tooltips, e.clientX, e.clientY);
             //addClass( tooltips, 'disableTextSelection' );
             drag = {
                 elem: tooltips,
-                x: movement.x,
-                y: movement.y,
                 state: true
             };
         }
@@ -121,12 +116,14 @@ function computeShift( clientX, clientY ){
     const scrollTop     = (window.pageYOffset || doc.scrollTop)  - (doc.clientTop  || 0);
     const offsetX       = clientX - scrollLeft;
     const offsetY       = clientY - scrollTop;
-    return {
-            x:      offsetX,
-            y:      offsetY,
-            left:   scrollLeft,
-            top:    scrollTop
-           };
+    const result        = {
+                            x:      offsetX     ,
+                            y:      offsetY     ,
+                            left:   scrollLeft  ,
+                            top:    scrollTop
+                           };
+//    console.log(result);
+    return result;
 }
 
 function createInformativeNode( node, title, text, color ){
@@ -192,6 +189,8 @@ document.onmousemove=function(e){
         const movement          = move( drag.elem, e.clientX, e.clientY );
         drag.elem.style.left    = movement.x  + 'px';
         drag.elem.style.top     = movement.y  + 'px';
+        pauseEvent(e);
+//        console.log(movement);
     }
 }
 document.onmouseup=function(e){
@@ -199,8 +198,6 @@ document.onmouseup=function(e){
         removeClass( drag.elem, 'disableTextSelection' );
         drag = {
             elem: null,
-            x: 0,
-            y: 0,
             state: false
         };
     }
