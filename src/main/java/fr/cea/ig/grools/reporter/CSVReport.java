@@ -41,6 +41,7 @@ import fr.cea.ig.grools.common.WrapFile;
 import fr.cea.ig.grools.fact.Concept;
 import fr.cea.ig.grools.fact.Observation;
 import fr.cea.ig.grools.fact.ObservationSet;
+import fr.cea.ig.grools.fact.ObservationType;
 import fr.cea.ig.grools.fact.PriorKnowledge;
 import fr.cea.ig.grools.logic.TruthValueSet;
 import fr.cea.ig.grools.reasoner.Reasoner;
@@ -65,27 +66,24 @@ import java.util.List;
  */
 public class CSVReport extends WrapFile {
     private static final Logger    LOGGER = ( Logger ) LoggerFactory.getLogger( CSVReport.class );
-    private static final Object[]  header = { "Name", "Label", "Source", "Description", "Type", "Expectation", "Expectation approximated", "Prediction", "Prediction approximated", "Conclusion" };
+    private static final Object[]  header = { "Name", "Label", "Source", "Description", "Type", "Has Direct Expectation", "Has Direct Prediction", "Expectation", "Expectation approximated", "Prediction", "Prediction approximated", "Conclusion" };
     private static final CSVFormat format = CSVFormat.RFC4180
             .withDelimiter( ';' )
             .withRecordSeparator( '\n' )
             .withQuote( '"' )
             .withFirstRecordAsHeader( );
-    private CSVPrinter csvPrinter;
+    private final CSVPrinter csvPrinter;
 
-    private void init( ) throws IOException {
-        csvPrinter = new CSVPrinter( bos, format );
-        csvPrinter.printRecord( header );
-    }
-
-    public CSVReport( @NonNull final String filepath ) throws IOException {
+    public CSVReport( @NonNull final String filepath, @NonNull final Reasoner reasoner ) throws IOException {
         super( filepath );
-        init( );
+        this.csvPrinter = new CSVPrinter( bos, format );
+        csvPrinter.printRecord( header );
     }
 
     public CSVReport( @NonNull final File file ) throws IOException {
         super( file );
-        init( );
+        this.csvPrinter = new CSVPrinter( bos, format );
+        csvPrinter.printRecord( header );
     }
 
     public void addRow( @NonNull final Concept concept ) throws IOException {
@@ -97,35 +95,50 @@ public class CSVReport extends WrapFile {
         if( concept instanceof Observation ) {
             final Observation o = ( Observation ) concept;
             records.add( o.getType( ) );
+            records.add( "NA" );
+            records.add( "NA" );
             switch( o.getType( ) ) {
                 case COMPUTATION:
-                    records.add( o.getTruthValue( ) );
-                    records.add( o.getTruthValue( ) );
-                    records.add( "NA" );
-                    records.add( "NA" );
+                    records.add( o.getTruthValue( ) );  // expectation field
+                    records.add( o.getTruthValue( ) );  // approximated expectation field
+                    records.add( "NA" );                // prediction field
+                    records.add( "NA" );                // approximated prediction field
                     break;
                 case CURATION:
-                    records.add( o.getTruthValue( ) );
-                    records.add( o.getTruthValue( ) );
-                    records.add( o.getTruthValue( ) );
-                    records.add( o.getTruthValue( ) );
+                    records.add( o.getTruthValue( ) );  // expectation field
+                    records.add( o.getTruthValue( ) );  // approximated expectation field
+                    records.add( o.getTruthValue( ) );  // prediction field
+                    records.add( o.getTruthValue( ) );  // approximated prediction field
                     break;
                 case EXPERIMENTATION:
-                    records.add( "NA" );
-                    records.add( "NA" );
-                    records.add( o.getTruthValue( ) );
-                    records.add( o.getTruthValue( ) );
+                    records.add( "NA" );                // expectation field
+                    records.add( "NA" );                // approximated expectation field
+                    records.add( o.getTruthValue( ) );  // prediction field
+                    records.add( o.getTruthValue( ) );  // approximated prediction field
                     break;
                 default:
                     LOGGER.warn( "Unexpected observation type: " + o.getType( ) );
             }
-            records.add( "NA" );
-            records.add( "NA" );
-            records.add( "NA" );
+            records.add( "NA" ); // conclusion field
         }
         else if( concept instanceof PriorKnowledge ) {
+            final Reasoner reasoner = SharedData.getInstance().getReasoner();
             final PriorKnowledge pk = ( PriorKnowledge ) concept;
+            final boolean hasDirectExpectation = reasoner.getRelationsWithTarget( pk )
+                                                         .stream()
+                                                         .filter(   relation  -> relation.getSource() instanceof Observation )
+                                                         .filter(   relation -> relation.getType().equals( ObservationType.CURATION ) || relation.getType().equals( ObservationType.EXPERIMENTATION ) )
+                                                         .findFirst()
+                                                         .isPresent();
+            final boolean hasDirectPrediction = reasoner.getRelationsWithTarget( pk )
+                                                         .stream()
+                                                         .filter(   relation  -> relation.getSource() instanceof Observation )
+                                                         .filter(   relation -> relation.getType().equals( ObservationType.CURATION ) || relation.getType().equals( ObservationType.COMPUTATION ) )
+                                                         .findFirst()
+                                                         .isPresent();
             records.add( "PRIOR KNOWLEDGE" );
+            records.add( hasDirectExpectation );
+            records.add( hasDirectPrediction );
             records.add( pk.getExpectation( ) );
             records.add( TruthValueSet.toLiteral( Reasoner.expectationToTruthValueSet( pk.getExpectation( ) ) ) );
             records.add( pk.getPrediction( ) );

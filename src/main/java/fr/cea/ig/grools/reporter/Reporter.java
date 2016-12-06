@@ -46,6 +46,7 @@ import fr.cea.ig.grools.logic.TruthValue;
 import fr.cea.ig.grools.logic.TruthValuePowerSet;
 import fr.cea.ig.grools.logic.TruthValueSet;
 import fr.cea.ig.grools.reasoner.Mode;
+import fr.cea.ig.grools.reasoner.Reasoner;
 import fr.cea.ig.grools.reasoner.VariantMode;
 import lombok.NonNull;
 import org.slf4j.LoggerFactory;
@@ -80,8 +81,7 @@ public final class Reporter {
     private final String        outputDir;
     private final TableReport   tableReport;
     private final CSVReport     csvReport;
-    private final Mode          mode;
-    
+
     
     private static String colorList( final PriorKnowledge pk ) {
         return  toApproxExp( pk.getExpectation( ) )[1] + ";0.5:" + toApproxPred( pk.getPrediction( ) )[1];
@@ -243,9 +243,11 @@ public final class Reporter {
     }
     
     private String writeDotFile( @NonNull final String graphName, @NonNull final Set<Relation> relations, final Set<Concept> concepts ) throws Exception {
-        final String  dotFilename = Paths.get( outputDir, graphName, graphName + ".dot" ).toString( );
-        final DotFile dotFile     = new DotFile( graphName, dotFilename );
-        
+        final String    dotFilename = Paths.get( outputDir, graphName, graphName + ".dot" ).toString( );
+        final DotFile   dotFile     = new DotFile( graphName, dotFilename );
+        final Mode      mode        = SharedData.getInstance()
+                                                .getReasoner()
+                                                .getMode();
         for( final Concept concept : concepts ) {
             final String sourceId = underscoretify( concept.getName( ) );
             if( !addNode( concept, sourceId, dotFile ) ) {
@@ -356,11 +358,12 @@ public final class Reporter {
         return stats;
     }
 
-    public Reporter( @NonNull final String outDir, @NonNull final Mode reasonerMode ) throws Exception {
+    public Reporter( @NonNull final String outDir, @NonNull final Reasoner reasoner ) throws Exception {
         outputDir   = outDir;
         tableReport = new TableReport( Paths.get( outputDir, "index.html" ).toFile( ), "./" );
         csvReport   = new CSVReport( Paths.get( outputDir, "results.csv" ).toFile( ) );
-        mode        = reasonerMode;
+        SharedData instance = SharedData.getInstance();
+        instance.setReasoner( reasoner );
 
         String jsPath1 = ResourceExporter.export( "/js/svg_common.js"   , outputDir );
         String jsPath2 = ResourceExporter.export( "/js/list.js"         , outputDir );
