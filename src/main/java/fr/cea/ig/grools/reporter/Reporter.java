@@ -57,6 +57,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -77,11 +79,26 @@ import java.util.stream.Collectors;
  * @enduml
  */
 public final class Reporter {
-    private static transient final Logger LOGGER = ( Logger ) LoggerFactory.getLogger( Reporter.class );
+    private static transient final Logger                       LOGGER               = ( Logger ) LoggerFactory.getLogger( Reporter.class );
+    private static final           EnumMap<Conclusion,Integer>  pathwaysStats        = new EnumMap<>( Conclusion.class );
+    private static final           EnumMap<Conclusion,Integer>  functionalUnitsStats = new EnumMap<>( Conclusion.class );
     private final String        outputDir;
     private final TableReport   tableReport;
     private final CSVReport     csvReport;
 
+    @NonNull
+    private static EnumMap<SensitivitySpecifity,Integer> categorizeConclusions( @NonNull final Map<Conclusion,Integer> conclusions ){
+        final EnumMap<SensitivitySpecifity,Integer> stats = new EnumMap<>( SensitivitySpecifity.class );
+        stats.put( SensitivitySpecifity.TRUE_POSITIVE , conclusions.getOrDefault( Conclusion.CONFIRMED_PRESENCE, 0 ) );
+        stats.put( SensitivitySpecifity.TRUE_NEGATIVE , conclusions.getOrDefault( Conclusion.CONFIRMED_ABSENCE, 0 )
+                                                        + conclusions.getOrDefault( Conclusion.ABSENT, 0 ));
+        stats.put( SensitivitySpecifity.FALSE_POSITIVE, conclusions.getOrDefault( Conclusion.UNEXPECTED_PRESENCE, 0 )
+                                                        + conclusions.getOrDefault( Conclusion.CONTRADICTORY_PRESENCE, 0 ) );
+        stats.put( SensitivitySpecifity.FALSE_NEGATIVE, conclusions.getOrDefault( Conclusion.MISSING, 0 )
+                                                        + conclusions.getOrDefault( Conclusion.UNEXPECTED_ABSENCE, 0 )
+                                                        + conclusions.getOrDefault( Conclusion.CONTRADICTORY_ABSENCE, 0 ) );
+        return stats;
+    }
     
     private static String colorList( final PriorKnowledge pk ) {
         return  toApproxExp( pk.getExpectation( ) )[1] + ";0.5:" + toApproxPred( pk.getPrediction( ) )[1];
@@ -353,15 +370,28 @@ public final class Reporter {
         Map<Conclusion, Long> conclusionsStats = leaves.stream( )
                                                        .map( leaf -> leaf.getConclusion() )
                                                        .collect(Collectors.groupingBy( Function.identity( ), Collectors.counting( ) ) );
-        conclusionsStats.forEach( (k,v) -> stats.put( k.toString(), v.floatValue() ) );
+        conclusionsStats.forEach( (k,v) -> {
+            stats.put( k.toString(), v.floatValue() );
+            final Integer value = functionalUnitsStats.get( k );
+            functionalUnitsStats.put( k, value + 1 );
+        });
 
         return stats;
     }
 
     public Reporter( @NonNull final String outDir, @NonNull final Reasoner reasoner ) throws Exception {
-        outputDir   = outDir;
-        tableReport = new TableReport( Paths.get( outputDir, "index.html" ).toFile( ), "./" );
-        csvReport   = new CSVReport( Paths.get( outputDir, "results.csv" ).toFile( ) );
+        outputDir               = outDir;
+        tableReport             = new TableReport( Paths.get( outputDir, "index.html" ).toFile( ), "./" );
+        csvReport               = new CSVReport( Paths.get( outputDir, "results.csv" ).toFile( ) );
+        
+        // Initialize hashmap
+        pathwaysStats.clear();
+        functionalUnitsStats.clear();
+        Arrays.stream( Conclusion.values( ) ).forEach( c -> {
+            pathwaysStats.put( c, 0 );
+            functionalUnitsStats.put( c, 0   );
+        } );
+        
         SharedData instance = SharedData.getInstance();
         instance.setReasoner( reasoner );
 
@@ -393,7 +423,11 @@ public final class Reporter {
                                                             .filter(    c -> c instanceof PriorKnowledge )
                                                             .map(       c -> (PriorKnowledge)c )
                                                             .collect( Collectors.toSet() );
-        Map<String,Float> stats = subGraphStat( relations, priorKnowledges );
+        final Map<String,Float> stats = subGraphStat( relations, priorKnowledges );
+        
+        // TODO map pathway <-> SensitivitySpecifity
+        // TODO csv 2 column pathway, SensitivitySpecifity
+        pathwaysStats.put( priorKnowledge.getConclusion(), pathwaysStats.get( priorKnowledge.getConclusion() ) + 1);
         
         final String dotFilename  = writeDotFile( graphName, relations, concepts );
         final String jsFilename   = writeJsFile( graphName, concepts );
