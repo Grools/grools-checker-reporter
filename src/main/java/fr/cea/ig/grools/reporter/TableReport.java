@@ -49,6 +49,8 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.util.EnumMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -75,14 +77,36 @@ public final class TableReport extends WrapFile {
         writeln( "        <link rel=\"stylesheet\" type=\"text/css\" href=\"" + resourcesDir + "/css/table.css\">" );
         writeln( "        <script type=\"text/javascript\" src=\"" + resourcesDir + "js/list.js\"></script>" );
         writeln( "        <script type=\"text/javascript\">" );
-        writeln( "          window.onload=function() {" );
+        writeln( "          window.addEventListener('DOMContentLoaded', function() {" );
         writeln( "            var options = { valueNames: [ 'Prior-Knowledge', 'Description', 'Prediction', 'Expectation', 'Conclusion', 'Leaf Statistics' ] };" );
-        writeln( "            var rowList = new List('results', options);" );
-        writeln( "          };" );
+        writeln( "            var rowList = new List('global_report', options);" );
+        writeln( "            document.getElementById('global_report').style.display = \"block\";" );
+        writeln( "          });" );
+        writeln( "          function openTab(evt, tabName) {");
+        writeln( "              // Declare all variables");
+        writeln( "              var i, tabcontent, tablinks;");
+        writeln( "              // Get all elements with class=\"tabcontent\" and hide them");
+        writeln( "              tabcontent = document.getElementsByClassName(\"tabcontent\");");
+        writeln( "              for (i = 0; i < tabcontent.length; i++) {");
+        writeln( "                  tabcontent[i].style.display = \"none\";");
+        writeln( "              }");
+        writeln( "              // Get all elements with class=\"tablinks\" and remove the class \"active\"");
+        writeln( "              tablinks = document.getElementsByClassName(\"tablinks\");");
+        writeln( "              for (i = 0; i < tablinks.length; i++) {");
+        writeln( "                  tablinks[i].className = tablinks[i].className.replace(\" active\", \"\");");
+        writeln( "              }");
+        writeln( "              // Show the current tab, and add an \"active\" class to the button that opened the tab");
+        writeln( "              document.getElementById(tabName).style.display = \"block\";");
+        writeln( "              evt.currentTarget.className += \" active\";");
+        writeln( "          }");
         writeln( "        </script>" );
         writeln( "    </head>" );
         writeln( "    <body>" );
-        writeln( "        <div id=\"results\">" );
+        writeln( "    <div class=\"tab\">" );
+        writeln( "        <button class=\"tablinks\" onclick=\"openTab(event, 'global_report')\">Global report</button>" );
+        writeln( "        <button class=\"tablinks\" onclick=\"openTab(event, 'stats')\">Statistical report</button>" );
+        writeln( "    </div>" );
+        writeln( "        <div id=\"global_report\" class=\"tabcontent active\">" );
         writeln( "            <div class=\"button\">" );
         writeln( "                <input class=\"search\" placeholder=\"Search\" />" );
         writeln( "                <a href=\"./results.csv\">Get results CSV file</a>" );
@@ -146,12 +170,15 @@ public final class TableReport extends WrapFile {
         super( file );
         init( resourcesDir );
     }
-    
+
+    public void closeTable( ) throws IOException {
+        writeln( "                </tbody>" );
+        writeln( "            </table>" );
+        writeln( "        </div>" );
+    }
+
     public void close( ) throws IOException {
         if( !isClosed( ) ) {
-            writeln( "                </tbody>" );
-            writeln( "            </table>" );
-            writeln( "        <div>" );
             writeln( "    </body>" );
             writeln( "</html>" );
             super.close( );
@@ -162,5 +189,39 @@ public final class TableReport extends WrapFile {
         close( );
         super.finalize( );
     }
-    
+
+    public void addStats(@NonNull final String content, @NonNull final String id, @NonNull final EnumMap<SensitivitySpecificity, List<PriorKnowledge>> pathwaysStats ) throws IOException{
+        writeln( "    <div id=\""+id+"\" class=\"tabcontent\">" );
+        writeln( "        <table id=\""+id+"_table\">" );
+        writeln( "            <colgroup>" );
+        writeln( "                <col width=\"70%\">" );
+        writeln( "                <col width=\"30%\">" );
+        writeln( "            <colgroup>" );
+        writeln( "            <thead>" );
+        writeln( "                <tr>" );
+        writeln( "                    <th>Name</th>" );
+        writeln( "                    <th>Values</th>" );
+        writeln( "                </tr>" );
+        writeln( "            </thead>" );
+        writeln( "            <tbody>" );
+        for( final Map.Entry<SensitivitySpecificity, List<PriorKnowledge>> entry : pathwaysStats.entrySet() ){
+            for( final PriorKnowledge pk : entry.getValue() ){
+                String color = "#000000";
+                writeln( "                <tr>" );
+                writeln( "                    <td>"+pk.getName()+"</td>" );
+                switch ( entry.getKey() ) {
+                    case TRUE_POSITIVE: color ="#00ff00"; break;
+                    case TRUE_NEGATIVE: color ="#00ff00"; break;
+                    case FALSE_POSITIVE: color ="#ff0000"; break;
+                    case FALSE_NEGATIVE: color ="#ff0000"; break;
+                    default: color ="#ffffff"; break;
+                }
+                writeln( "                    <td><font color=\""+color+"\">" + entry.getKey( ) + "</font></td>" );
+                writeln( "                </tr>" );
+            }
+        }
+        writeln( "            </tbody>" );
+        writeln( "        </table>" );
+        writeln( "    </div>" );
+    }
 }

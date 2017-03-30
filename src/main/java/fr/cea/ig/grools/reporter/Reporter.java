@@ -44,7 +44,6 @@ import fr.cea.ig.grools.fact.Relation;
 import fr.cea.ig.grools.logic.Conclusion;
 import fr.cea.ig.grools.logic.TruthValue;
 import fr.cea.ig.grools.logic.TruthValuePowerSet;
-import fr.cea.ig.grools.logic.TruthValueSet;
 import fr.cea.ig.grools.reasoner.Mode;
 import fr.cea.ig.grools.reasoner.Reasoner;
 import fr.cea.ig.grools.reasoner.VariantMode;
@@ -55,10 +54,11 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumMap;
-import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -80,24 +80,41 @@ import java.util.stream.Collectors;
  */
 public final class Reporter {
     private static transient final Logger                       LOGGER               = ( Logger ) LoggerFactory.getLogger( Reporter.class );
-    private static final           EnumMap<Conclusion,Integer>  pathwaysStats        = new EnumMap<>( Conclusion.class );
-    private static final           EnumMap<Conclusion,Integer>  functionalUnitsStats = new EnumMap<>( Conclusion.class );
+    private static final           EnumMap<SensitivitySpecificity,List<PriorKnowledge>>  pathwaysStats        = new EnumMap<>( SensitivitySpecificity.class );
+    private static final           EnumMap<SensitivitySpecificity,List<PriorKnowledge>>  functionalUnitsStats = new EnumMap<>( SensitivitySpecificity.class );
     private final String        outputDir;
     private final TableReport   tableReport;
     private final CSVReport     csvReport;
+    private final CSVSensitivitySpecificity csvPathwaysStats;
+    private final CSVSensitivitySpecificity csvFunctionalUnityStats;
 
     @NonNull
-    private static EnumMap<SensitivitySpecifity,Integer> categorizeConclusions( @NonNull final Map<Conclusion,Integer> conclusions ){
-        final EnumMap<SensitivitySpecifity,Integer> stats = new EnumMap<>( SensitivitySpecifity.class );
-        stats.put( SensitivitySpecifity.TRUE_POSITIVE , conclusions.getOrDefault( Conclusion.CONFIRMED_PRESENCE, 0 ) );
-        stats.put( SensitivitySpecifity.TRUE_NEGATIVE , conclusions.getOrDefault( Conclusion.CONFIRMED_ABSENCE, 0 )
+    private static EnumMap<SensitivitySpecificity,Integer> classifyConclusions( @NonNull final Map<Conclusion,Integer> conclusions ){
+        final EnumMap<SensitivitySpecificity,Integer> stats = new EnumMap<>( SensitivitySpecificity.class );
+        stats.put( SensitivitySpecificity.TRUE_POSITIVE , conclusions.getOrDefault( Conclusion.CONFIRMED_PRESENCE, 0 ) );
+        stats.put( SensitivitySpecificity.TRUE_NEGATIVE , conclusions.getOrDefault( Conclusion.CONFIRMED_ABSENCE, 0 )
                                                         + conclusions.getOrDefault( Conclusion.ABSENT, 0 ));
-        stats.put( SensitivitySpecifity.FALSE_POSITIVE, conclusions.getOrDefault( Conclusion.UNEXPECTED_PRESENCE, 0 )
+        stats.put( SensitivitySpecificity.FALSE_POSITIVE, conclusions.getOrDefault( Conclusion.UNEXPECTED_PRESENCE, 0 )
                                                         + conclusions.getOrDefault( Conclusion.CONTRADICTORY_PRESENCE, 0 ) );
-        stats.put( SensitivitySpecifity.FALSE_NEGATIVE, conclusions.getOrDefault( Conclusion.MISSING, 0 )
+        stats.put( SensitivitySpecificity.FALSE_NEGATIVE, conclusions.getOrDefault( Conclusion.MISSING, 0 )
                                                         + conclusions.getOrDefault( Conclusion.UNEXPECTED_ABSENCE, 0 )
                                                         + conclusions.getOrDefault( Conclusion.CONTRADICTORY_ABSENCE, 0 ) );
         return stats;
+    }
+
+    public static SensitivitySpecificity toClassification( @NonNull final Conclusion conclusion ){
+        SensitivitySpecificity result = null;
+        switch ( conclusion ){
+            case CONFIRMED_PRESENCE: result = SensitivitySpecificity.TRUE_POSITIVE; break;
+            case CONFIRMED_ABSENCE: result = SensitivitySpecificity.TRUE_NEGATIVE; break;
+            case UNEXPECTED_PRESENCE:
+            case ABSENT: result = SensitivitySpecificity.FALSE_POSITIVE; break;
+            case MISSING:
+            case UNEXPECTED_ABSENCE:
+            case CONTRADICTORY_ABSENCE: result = SensitivitySpecificity.FALSE_NEGATIVE; break;
+            default: result = SensitivitySpecificity.NOT_AVAILABLE;
+        }
+        return result;
     }
     
     private static String colorList( final PriorKnowledge pk ) {
@@ -303,24 +320,36 @@ public final class Reporter {
         return jsFilename;
     }
     
-    private String writeTableReport( @NonNull final Path path, @NonNull final Set<Concept> concepts ) throws Exception {
+    private String writeTableReport( @NonNull final Path path, @NonNull final Set< Concept > concepts, @NonNull final EnumMap< SensitivitySpecificity, List< PriorKnowledge > > functionalUnitsStats ) throws Exception {
         final TableReport table = new TableReport( path.toFile( ), "../" );
         for( final Concept concept : concepts ) {
             if( concept instanceof PriorKnowledge )
                 table.addRow( ( PriorKnowledge ) concept );
         }
+        table.closeTable();
+        table.addStats( "Functional Units", "stats", Reporter.functionalUnitsStats );
         table.close( );
         return table.getFileName( );
     }
     
     private String writeCSVReport( @NonNull final Path path, @NonNull final Set<Concept> concepts ) throws Exception {
-        CSVReport csv = new CSVReport( path.toFile( ) );
+        final CSVReport csv = new CSVReport( path.toFile( ) );
         for( final Concept concept : concepts )
             csv.addRow( concept );
         csv.close( );
         return csv.getFileName( );
     }
-    
+
+    private String writeCSVFunctionalUnitsClass( @NonNull final Path path, @NonNull final Map<SensitivitySpecificity,List<PriorKnowledge>> values ) throws Exception{
+        final CSVSensitivitySpecificity csv = new CSVSensitivitySpecificity( path.toFile() );
+        for( final Map.Entry<SensitivitySpecificity, List< PriorKnowledge>> entry : values.entrySet( ) ){
+            for( final PriorKnowledge pk : entry.getValue() )
+                csv.addRow( pk );
+        }
+        csv.close( );
+        return csv.getFileName( );
+    }
+
     private String writeJSONFile( @NonNull final Path jsonPathFile, @NonNull final Set<Relation> relations, final Set<Concept> concepts ) throws Exception {
         final WrapFile      json          = new WrapFile( jsonPathFile.toFile( ) );
         final AtomicInteger atomicInteger = new AtomicInteger( 0 );
@@ -342,7 +371,7 @@ public final class Reporter {
         return jsonPathFile.toString( );
     }
 
-    private static Map<String,Float> subGraphStat( @NonNull final Set<Relation> relations, @NonNull final Set<PriorKnowledge> priorKnowledges ){
+    private static FunctionalUnitStats subGraphStat( @NonNull final Set<Relation> relations, @NonNull final Set<PriorKnowledge> priorKnowledges ){
         final Map<String,Float> stats = new TreeMap<>(  );
 
         final Set<PriorKnowledge> sources = relations.stream( )
@@ -367,29 +396,32 @@ public final class Reporter {
 
 
         stats.put( "nb leaf concepts", ( float ) leaves.size( ) );
-        Map<Conclusion, Long> conclusionsStats = leaves.stream( )
-                                                       .map( leaf -> leaf.getConclusion() )
-                                                       .collect(Collectors.groupingBy( Function.identity( ), Collectors.counting( ) ) );
-        conclusionsStats.forEach( (k,v) -> {
-            stats.put( k.toString(), v.floatValue() );
-            final Integer value = functionalUnitsStats.get( k );
-            functionalUnitsStats.put( k, value + 1 );
-        });
+        final Map<Conclusion, Long> conclusionsStats = leaves.stream( )
+                                                             .map( leaf -> leaf.getConclusion() )
+                                                             .collect(Collectors.groupingBy( Function.identity( ), Collectors.counting( ) ) );
+        conclusionsStats.forEach( (k,v) -> stats.put( k.toString(), v.floatValue() ) );
 
-        return stats;
+        final Map<SensitivitySpecificity,List<PriorKnowledge>> leavesClassified = leaves.stream()
+                                                                                        .collect( Collectors.groupingBy( pk -> toClassification( pk.getConclusion() ) ) );
+
+        functionalUnitsStats.putAll( leavesClassified );
+
+        return new FunctionalUnitStats(stats, leavesClassified);
     }
 
     public Reporter( @NonNull final String outDir, @NonNull final Reasoner reasoner ) throws Exception {
         outputDir               = outDir;
         tableReport             = new TableReport( Paths.get( outputDir, "index.html" ).toFile( ), "./" );
         csvReport               = new CSVReport( Paths.get( outputDir, "results.csv" ).toFile( ) );
-        
+        csvPathwaysStats        = new CSVSensitivitySpecificity( Paths.get( outputDir, "pathways_stats.csv" ).toFile( ) );
+        csvFunctionalUnityStats = new CSVSensitivitySpecificity( Paths.get( outputDir, "functional_units_stats.csv" ).toFile( ) );
+
         // Initialize hashmap
         pathwaysStats.clear();
         functionalUnitsStats.clear();
-        Arrays.stream( Conclusion.values( ) ).forEach( c -> {
-            pathwaysStats.put( c, 0 );
-            functionalUnitsStats.put( c, 0   );
+        Arrays.stream( SensitivitySpecificity.values( ) ).forEach( s -> {
+            pathwaysStats.put( s, new ArrayList<>(  ) );
+            functionalUnitsStats.put( s, new ArrayList<>(  )   );
         } );
         
         SharedData instance = SharedData.getInstance();
@@ -423,18 +455,21 @@ public final class Reporter {
                                                             .filter(    c -> c instanceof PriorKnowledge )
                                                             .map(       c -> (PriorKnowledge)c )
                                                             .collect( Collectors.toSet() );
-        final Map<String,Float> stats = subGraphStat( relations, priorKnowledges );
+        final FunctionalUnitStats stats = subGraphStat( relations, priorKnowledges );
         
-        // TODO map pathway <-> SensitivitySpecifity
-        // TODO csv 2 column pathway, SensitivitySpecifity
-        pathwaysStats.put( priorKnowledge.getConclusion(), pathwaysStats.get( priorKnowledge.getConclusion() ) + 1);
+        // TODO map pathway <-> SensitivitySpecificity
+        // TODO csv 2 column pathway, SensitivitySpecificity
+        final List<PriorKnowledge> pathways = pathwaysStats.get( toClassification( priorKnowledge.getConclusion() ) );
+        pathways.add( priorKnowledge );
+        csvPathwaysStats.addRow( priorKnowledge );
         
-        final String dotFilename  = writeDotFile( graphName, relations, concepts );
-        final String jsFilename   = writeJsFile( graphName, concepts );
-        final String trFilename   = writeTableReport( Paths.get( outputDir, graphName, "result_table.html" ), concepts );
-        final String csvFilename  = writeCSVReport( Paths.get( outputDir, graphName, "results.csv" ), concepts );
-        final String jsonFilename = writeJSONFile( Paths.get( outputDir, graphName, "results.json" ), relations, concepts );
-        
+        final String dotFilename    = writeDotFile( graphName, relations, concepts );
+        final String jsFilename     = writeJsFile( graphName, concepts );
+        final String trFilename     = writeTableReport( Paths.get( outputDir, graphName, "result_table.html" ), concepts, functionalUnitsStats );
+        final String csvFilename    = writeCSVReport( Paths.get( outputDir, graphName, "results.csv" ), concepts );
+        final String jsonFilename   = writeJSONFile( Paths.get( outputDir, graphName, "results.json" ), relations, concepts );
+        final String csvFUCFilename = writeCSVFunctionalUnitsClass( Paths.get( outputDir, graphName, "functional_units_stats.csv" ), stats.getLeavesClass() );
+        functionalUnitsStats.clear();
         graphicReport.addGraph( graphName, graphName + ".svg" );
         graphicReport.close( );
 
@@ -444,18 +479,23 @@ public final class Reporter {
         final int    tildeIndex  = priorKnowledge.getDescription( ).indexOf( '~' );
         final String description = ( tildeIndex >= 0 ) ? priorKnowledge.getDescription( ).substring( 0, tildeIndex )
                                                        : priorKnowledge.getDescription( );
-        tableReport.addRow( priorKnowledge, stats, url, description );
+        tableReport.addRow( priorKnowledge, stats.getConclusionsStats(), url, description );
         csvReport.addRow( priorKnowledge );
         LOGGER.debug( "File copied " + jsFilename );
         LOGGER.debug( "File copied " + trFilename );
         LOGGER.debug( "File copied " + jsonFilename );
         LOGGER.debug( "File copied " + csvFilename );
         LOGGER.debug( "File copied " + dotFilename );
+        LOGGER.debug( "File copied " + csvFUCFilename );
     }
     
     public void close( ) throws IOException {
+        tableReport.closeTable();
+        tableReport.addStats( "Pathways", "stats", pathwaysStats );
         tableReport.close( );
         csvReport.close( );
+        csvPathwaysStats.close( );
+        csvFunctionalUnityStats.close();
     }
     
     public void finalize( ) throws Throwable {
@@ -463,6 +503,10 @@ public final class Reporter {
             tableReport.close( );
         if( !csvReport.isClosed( ) )
             csvReport.close( );
+        if( !csvPathwaysStats.isClosed( ) )
+            csvPathwaysStats.close( );
+        if( !csvFunctionalUnityStats.isClosed( ) )
+            csvFunctionalUnityStats.close( );
     }
     
     
