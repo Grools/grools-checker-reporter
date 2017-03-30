@@ -214,7 +214,7 @@ public final class TableReport extends WrapFile {
                     case TRUE_NEGATIVE: color ="#00ff00"; break;
                     case FALSE_POSITIVE: color ="#ff0000"; break;
                     case FALSE_NEGATIVE: color ="#ff0000"; break;
-                    default: color ="#ffffff"; break;
+                    default: color ="#000000"; break;
                 }
                 writeln( "                    <td><font color=\""+color+"\">" + entry.getKey( ) + "</font></td>" );
                 writeln( "                </tr>" );
