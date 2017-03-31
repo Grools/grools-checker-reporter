@@ -82,6 +82,10 @@ public class WrapFile {
         bos.write( tmp );
     }
 
+    public void write( final String data ) throws IOException {
+        bos.write( data );
+    }
+
     public void close( ) throws IOException {
         if( !isClosed ) {
             isClosed = true;

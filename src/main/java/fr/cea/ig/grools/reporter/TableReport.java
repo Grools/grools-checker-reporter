@@ -65,7 +65,7 @@ import java.util.Map;
 public final class TableReport extends WrapFile {
     private static final Logger LOG = ( Logger ) LoggerFactory.getLogger( TableReport.class );
     
-    private void init( @NonNull final String resourcesDir ) throws Exception {
+    private void init( @NonNull final String resourcesDir, final boolean withGlobalFunctionalStats ) throws Exception {
         final String outputDir = file.getParent( );
         writeln( "<!DOCTYPE html>" );
         writeln( "<html>" );
@@ -78,8 +78,14 @@ public final class TableReport extends WrapFile {
         writeln( "        <script type=\"text/javascript\" src=\"" + resourcesDir + "js/list.js\"></script>" );
         writeln( "        <script type=\"text/javascript\">" );
         writeln( "          window.addEventListener('DOMContentLoaded', function() {" );
-        writeln( "            var options = { valueNames: [ 'Prior-Knowledge', 'Description', 'Prediction', 'Expectation', 'Conclusion', 'Leaf Statistics' ] };" );
-        writeln( "            var rowList = new List('global_report', options);" );
+        writeln( "            var options1 = { valueNames: [ 'Prior-Knowledge', 'Description', 'Prediction', 'Expectation', 'Conclusion', 'Leaf Statistics' ] };" );
+        writeln( "            var rowList1 = new List('global_report', options1);" );
+        writeln( "            var options2 = { valueNames: [ 'Name', 'Values' ] };" );
+        writeln( "            var rowList2 = new List('pathways_stats', options2);" );
+        if( withGlobalFunctionalStats ) {
+            writeln( "            var options3 = { valueNames: [ 'Top Concept', 'Name', 'Values' ] };" );
+            writeln( "            var rowList3 = new List('functional_units_stats', options3);" );
+        }
         writeln( "            document.getElementById('global_report').style.display = \"block\";" );
         writeln( "          });" );
         writeln( "          function openTab(evt, tabName) {");
@@ -103,15 +109,18 @@ public final class TableReport extends WrapFile {
         writeln( "    </head>" );
         writeln( "    <body>" );
         writeln( "    <div class=\"tab\">" );
+        // This is hardcoded, code refactoring is needed, instead to write content sequentially we shoud to write the file once all IDs is provided
         writeln( "        <button class=\"tablinks\" onclick=\"openTab(event, 'global_report')\">Global report</button>" );
-        writeln( "        <button class=\"tablinks\" onclick=\"openTab(event, 'stats')\">Statistical report</button>" );
+        writeln( "        <button class=\"tablinks\" onclick=\"openTab(event, 'pathways_stats')\">Statistical report on Pathways</button>" );
+        if( withGlobalFunctionalStats )
+            writeln( "        <button class=\"tablinks\" onclick=\"openTab(event, 'functional_units_stats')\">Statistical report on Functional Units</button>" );
         writeln( "    </div>" );
         writeln( "        <div id=\"global_report\" class=\"tabcontent active\">" );
         writeln( "            <div class=\"button\">" );
         writeln( "                <input class=\"search\" placeholder=\"Search\" />" );
         writeln( "                <a href=\"./results.csv\">Get results CSV file</a>" );
         writeln( "            </div>" );
-        writeln( "            <table id=\"resultstable\">" );
+        writeln( "            <table id=\"global_report_table\">" );
         writeln( "                <colgroup>" );
         writeln( "                    <col width=\"15%\">" );
         writeln( "                    <col width=\"40%\">" );
@@ -122,12 +131,12 @@ public final class TableReport extends WrapFile {
         writeln( "                </colgroup>" );
         writeln( "                <thead>" );
         writeln( "                <tr>" );
-        writeln( "                    <th><span class=\"sort\" data-sort=\"Concept\">Prior-Knowledge</span></th>" );
+        writeln( "                    <th><span class=\"sort\" data-sort=\"Prior-Knowledge\">Prior-Knowledge</span></th>" );
         writeln( "                    <th><span class=\"sort\" data-sort=\"Description\">Description</span></th>" );
         writeln( "                    <th><span class=\"sort\" data-sort=\"Expectation\">Expectation</span></th>" );
         writeln( "                    <th><span class=\"sort\" data-sort=\"Prediction\">Prediction</span></th>" );
         writeln( "                    <th><span class=\"sort\" data-sort=\"Conclusion\">Conclusion</span></th>" );
-        writeln( "                    <th><span class=\"sort\" data-sort=\"Statistics\">Leaf Statistics</span></th>" );
+        writeln( "                    <th><span class=\"sort\" data-sort=\"Leaf Statistics\">Leaf Statistics</span></th>" );
         writeln( "                </tr>" );
         writeln( "                </thead>" );
         writeln( "                <tbody  class=\"list\">" );
@@ -163,12 +172,17 @@ public final class TableReport extends WrapFile {
     
     public TableReport( @NonNull final String outputDir, @NonNull final String fileName, @NonNull final String jsDir ) throws Exception {
         super( Paths.get( outputDir, fileName ).toFile( ) );
-        init( jsDir );
+        init( jsDir, false );
     }
     
     public TableReport( final File file, @NonNull final String resourcesDir ) throws Exception {
         super( file );
-        init( resourcesDir );
+        init( resourcesDir, false );
+    }
+
+    public TableReport( final boolean withGlobalFunctionalStats, final File file, @NonNull final String resourcesDir ) throws Exception {
+        super( file );
+        init( resourcesDir, withGlobalFunctionalStats );
     }
 
     public void closeTable( ) throws IOException {
@@ -190,7 +204,7 @@ public final class TableReport extends WrapFile {
         super.finalize( );
     }
 
-    public void addStats(@NonNull final String content, @NonNull final String id, @NonNull final EnumMap<SensitivitySpecificity, List<PriorKnowledge>> pathwaysStats ) throws IOException{
+    public void addStats(@NonNull final String content, @NonNull final String id, @NonNull final EnumMap<SensitivitySpecificity, List<PriorKnowledge>> stats ) throws IOException{
         writeln( "    <div id=\""+id+"\" class=\"tabcontent\">" );
         writeln( "        <table id=\""+id+"_table\">" );
         writeln( "            <colgroup>" );
@@ -199,16 +213,16 @@ public final class TableReport extends WrapFile {
         writeln( "            <colgroup>" );
         writeln( "            <thead>" );
         writeln( "                <tr>" );
-        writeln( "                    <th>Name</th>" );
-        writeln( "                    <th>Values</th>" );
+        writeln( "                    <th><span class=\"sort\" data-sort=\"Name\">Name</span></th>" );
+        writeln( "                    <th><span class=\"sort\" data-sort=\"Values\">Values</span></th>" );
         writeln( "                </tr>" );
         writeln( "            </thead>" );
-        writeln( "            <tbody>" );
-        for( final Map.Entry<SensitivitySpecificity, List<PriorKnowledge>> entry : pathwaysStats.entrySet() ){
+        writeln( "            <tbody  class=\"list\">" );
+        for( final Map.Entry<SensitivitySpecificity, List<PriorKnowledge>> entry : stats.entrySet() ){
             for( final PriorKnowledge pk : entry.getValue() ){
                 String color = "#000000";
                 writeln( "                <tr>" );
-                writeln( "                    <td>"+pk.getName()+"</td>" );
+                writeln( "                    <td class=\"Name\">"+pk.getName()+"</td>" );
                 switch ( entry.getKey() ) {
                     case TRUE_POSITIVE: color ="#00ff00"; break;
                     case TRUE_NEGATIVE: color ="#00ff00"; break;
@@ -216,8 +230,60 @@ public final class TableReport extends WrapFile {
                     case FALSE_NEGATIVE: color ="#ff0000"; break;
                     default: color ="#000000"; break;
                 }
-                writeln( "                    <td><font color=\""+color+"\">" + entry.getKey( ) + "</font></td>" );
+                writeln( "                    <td class=\"Values\"><font color=\""+color+"\">" + entry.getKey( ) + "</font></td>" );
                 writeln( "                </tr>" );
+            }
+        }
+        writeln( "            </tbody>" );
+        writeln( "        </table>" );
+        writeln( "    </div>" );
+    }
+
+    public void addStats(@NonNull final String content, @NonNull final String id, @NonNull final Map<PriorKnowledge,EnumMap<SensitivitySpecificity, List<PriorKnowledge>>> stats ) throws IOException{
+        writeln( "    <div id=\""+id+"\" class=\"tabcontent\">" );
+        writeln( "        <table id=\""+id+"_table\">" );
+        writeln( "            <colgroup>" );
+        writeln( "                <col width=\"40%\">" );
+        writeln( "                <col width=\"30%\">" );
+        writeln( "                <col width=\"30%\">" );
+        writeln( "            <colgroup>" );
+        writeln( "            <thead>" );
+        writeln( "                <tr>" );
+        writeln( "                    <th><span class=\"sort\" data-sort=\"Top Concept\">Top Concept</span></th>" );
+        writeln( "                    <th><span class=\"sort\" data-sort=\"Name\">Name</span></th>" );
+        writeln( "                    <th><span class=\"sort\" data-sort=\"Values\">Values</span></th>" );
+        writeln( "                </tr>" );
+        writeln( "            </thead>" );
+        writeln( "            <tbody  class=\"list\">" );
+        for( final Map.Entry<PriorKnowledge,EnumMap<SensitivitySpecificity, List<PriorKnowledge>>> values : stats.entrySet() ) {
+            final PriorKnowledge                                        topConcept      = values.getKey();
+            final EnumMap<SensitivitySpecificity, List<PriorKnowledge>> data            = values.getValue();
+            for ( final Map.Entry< SensitivitySpecificity, List< PriorKnowledge > > entry : data.entrySet( ) ) {
+                for ( final PriorKnowledge pk : entry.getValue( ) ) {
+                    String color = "#000000";
+                    writeln( "                <tr>" );
+                    writeln( "                    <td class=\"Top Concept\">" + topConcept.getName( ) + "</td>" );
+                    writeln( "                    <td class=\"Name\">" + pk.getName( )         + "</td>" );
+                    switch ( entry.getKey( ) ) {
+                        case TRUE_POSITIVE:
+                            color = "#00ff00";
+                            break;
+                        case TRUE_NEGATIVE:
+                            color = "#00ff00";
+                            break;
+                        case FALSE_POSITIVE:
+                            color = "#ff0000";
+                            break;
+                        case FALSE_NEGATIVE:
+                            color = "#ff0000";
+                            break;
+                        default:
+                            color = "#000000";
+                            break;
+                    }
+                    writeln( "                    <td class=\"Values\"><font color=\"" + color + "\">" + entry.getKey( ) + "</font></td>" );
+                    writeln( "                </tr>" );
+                }
             }
         }
         writeln( "            </tbody>" );

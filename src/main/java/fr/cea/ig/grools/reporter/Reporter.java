@@ -52,12 +52,14 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -79,9 +81,9 @@ import java.util.stream.Collectors;
  * @enduml
  */
 public final class Reporter {
-    private static transient final Logger                       LOGGER               = ( Logger ) LoggerFactory.getLogger( Reporter.class );
-    private static final           EnumMap<SensitivitySpecificity,List<PriorKnowledge>>  pathwaysStats        = new EnumMap<>( SensitivitySpecificity.class );
-    private static final           EnumMap<SensitivitySpecificity,List<PriorKnowledge>>  functionalUnitsStats = new EnumMap<>( SensitivitySpecificity.class );
+    private static transient final Logger                                                                   LOGGER               = ( Logger ) LoggerFactory.getLogger( Reporter.class );
+    private static final           EnumMap<SensitivitySpecificity,List<PriorKnowledge>>                     pathwaysStats        = new EnumMap<>( SensitivitySpecificity.class );
+    private static final           Map<PriorKnowledge,EnumMap<SensitivitySpecificity,List<PriorKnowledge>>> functionalUnitsStats = new HashMap<>(  );
     private final String        outputDir;
     private final TableReport   tableReport;
     private final CSVReport     csvReport;
@@ -327,7 +329,7 @@ public final class Reporter {
                 table.addRow( ( PriorKnowledge ) concept );
         }
         table.closeTable();
-        table.addStats( "Functional Units", "stats", Reporter.functionalUnitsStats );
+        table.addStats( "Functional Units", "stats", functionalUnitsStats );
         table.close( );
         return table.getFileName( );
     }
@@ -371,7 +373,7 @@ public final class Reporter {
         return jsonPathFile.toString( );
     }
 
-    private static FunctionalUnitStats subGraphStat( @NonNull final Set<Relation> relations, @NonNull final Set<PriorKnowledge> priorKnowledges ){
+    private static FunctionalUnitStats subGraphStat( @NonNull final Set< Relation > relations, @NonNull final Set< PriorKnowledge > priorKnowledges, @NonNull final CSVSensitivitySpecificity csvFunctionalUnityStats )throws IOException{
         final Map<String,Float> stats = new TreeMap<>(  );
 
         final Set<PriorKnowledge> sources = relations.stream( )
@@ -392,6 +394,14 @@ public final class Reporter {
         final Set<PriorKnowledge> leaves = priorKnowledges.stream()
                                                           .filter( pk -> sources.contains( pk ) )
                                                           .filter( pk -> !targets.contains( pk ) )
+                                                          .peek( pk -> {
+                                                              try {
+                                                                  csvFunctionalUnityStats.addRow( pk );
+                                                              }
+                                                              catch(IOException e) {
+                                                                  throw new UncheckedIOException( e );
+                                                              }
+                                                          } )
                                                           .collect( Collectors.toSet( ) );
 
 
@@ -401,28 +411,22 @@ public final class Reporter {
                                                              .collect(Collectors.groupingBy( Function.identity( ), Collectors.counting( ) ) );
         conclusionsStats.forEach( (k,v) -> stats.put( k.toString(), v.floatValue() ) );
 
-        final Map<SensitivitySpecificity,List<PriorKnowledge>> leavesClassified = leaves.stream()
-                                                                                        .collect( Collectors.groupingBy( pk -> toClassification( pk.getConclusion() ) ) );
-
-        functionalUnitsStats.putAll( leavesClassified );
+        final EnumMap<SensitivitySpecificity,List<PriorKnowledge>> leavesClassified = leaves.stream()
+                                                                                            .collect( Collectors.groupingBy( pk -> toClassification( pk.getConclusion() ), () -> new EnumMap<>(SensitivitySpecificity.class), Collectors.toList() ) );
 
         return new FunctionalUnitStats(stats, leavesClassified);
     }
 
     public Reporter( @NonNull final String outDir, @NonNull final Reasoner reasoner ) throws Exception {
         outputDir               = outDir;
-        tableReport             = new TableReport( Paths.get( outputDir, "index.html" ).toFile( ), "./" );
+        tableReport             = new TableReport( true, Paths.get( outputDir, "index.html" ).toFile( ), "./" );
         csvReport               = new CSVReport( Paths.get( outputDir, "results.csv" ).toFile( ) );
         csvPathwaysStats        = new CSVSensitivitySpecificity( Paths.get( outputDir, "pathways_stats.csv" ).toFile( ) );
         csvFunctionalUnityStats = new CSVSensitivitySpecificity( Paths.get( outputDir, "functional_units_stats.csv" ).toFile( ) );
 
-        // Initialize hashmap
+        // Initialize map
         pathwaysStats.clear();
         functionalUnitsStats.clear();
-        Arrays.stream( SensitivitySpecificity.values( ) ).forEach( s -> {
-            pathwaysStats.put( s, new ArrayList<>(  ) );
-            functionalUnitsStats.put( s, new ArrayList<>(  )   );
-        } );
         
         SharedData instance = SharedData.getInstance();
         instance.setReasoner( reasoner );
@@ -455,21 +459,22 @@ public final class Reporter {
                                                             .filter(    c -> c instanceof PriorKnowledge )
                                                             .map(       c -> (PriorKnowledge)c )
                                                             .collect( Collectors.toSet() );
-        final FunctionalUnitStats stats = subGraphStat( relations, priorKnowledges );
-        
-        // TODO map pathway <-> SensitivitySpecificity
-        // TODO csv 2 column pathway, SensitivitySpecificity
-        final List<PriorKnowledge> pathways = pathwaysStats.get( toClassification( priorKnowledge.getConclusion() ) );
+        final FunctionalUnitStats stats = subGraphStat( relations, priorKnowledges, csvFunctionalUnityStats );
+
+
+        functionalUnitsStats.put( priorKnowledge, stats.getLeavesClass().clone() );
+        final SensitivitySpecificity category = toClassification( priorKnowledge.getConclusion() );
+        final List<PriorKnowledge> pathways = pathwaysStats.getOrDefault( category , new ArrayList<>(  ) );
         pathways.add( priorKnowledge );
+        pathwaysStats.put( category, pathways );
         csvPathwaysStats.addRow( priorKnowledge );
         
         final String dotFilename    = writeDotFile( graphName, relations, concepts );
         final String jsFilename     = writeJsFile( graphName, concepts );
-        final String trFilename     = writeTableReport( Paths.get( outputDir, graphName, "result_table.html" ), concepts, functionalUnitsStats );
+        final String trFilename     = writeTableReport( Paths.get( outputDir, graphName, "result_table.html" ), concepts, stats.getLeavesClass() );
         final String csvFilename    = writeCSVReport( Paths.get( outputDir, graphName, "results.csv" ), concepts );
         final String jsonFilename   = writeJSONFile( Paths.get( outputDir, graphName, "results.json" ), relations, concepts );
         final String csvFUCFilename = writeCSVFunctionalUnitsClass( Paths.get( outputDir, graphName, "functional_units_stats.csv" ), stats.getLeavesClass() );
-        functionalUnitsStats.clear();
         graphicReport.addGraph( graphName, graphName + ".svg" );
         graphicReport.close( );
 
@@ -491,7 +496,8 @@ public final class Reporter {
     
     public void close( ) throws IOException {
         tableReport.closeTable();
-        tableReport.addStats( "Pathways", "stats", pathwaysStats );
+        tableReport.addStats( "Pathways", "pathways_stats", pathwaysStats );
+        tableReport.addStats( "Functional Units", "functional_units_stats", functionalUnitsStats );
         tableReport.close( );
         csvReport.close( );
         csvPathwaysStats.close( );
