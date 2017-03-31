@@ -50,8 +50,10 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  *
@@ -78,9 +80,9 @@ public final class TableReport extends WrapFile {
         writeln( "        <script type=\"text/javascript\" src=\"" + resourcesDir + "js/list.js\"></script>" );
         writeln( "        <script type=\"text/javascript\">" );
         writeln( "          window.addEventListener('DOMContentLoaded', function() {" );
-        writeln( "            var options1 = { valueNames: [ 'Prior-Knowledge', 'Description', 'Prediction', 'Expectation', 'Conclusion', 'Leaf Statistics' ] };" );
+        writeln( "            var options1 = { valueNames: [ 'Concept', 'Description', 'Prediction', 'Expectation', 'Conclusion', 'Leaf Statistics' ] };" );
         writeln( "            var rowList1 = new List('global_report', options1);" );
-        writeln( "            var options2 = { valueNames: [ 'Name', 'Values' ] };" );
+        writeln( "            var options2 = { valueNames: [ 'Name', 'Values', 'Accuracy' ] };" );
         writeln( "            var rowList2 = new List('pathways_stats', options2);" );
         if( withGlobalFunctionalStats ) {
             writeln( "            var options3 = { valueNames: [ 'Top Concept', 'Name', 'Values' ] };" );
@@ -131,7 +133,7 @@ public final class TableReport extends WrapFile {
         writeln( "                </colgroup>" );
         writeln( "                <thead>" );
         writeln( "                <tr>" );
-        writeln( "                    <th><span class=\"sort\" data-sort=\"Prior-Knowledge\">Prior-Knowledge</span></th>" );
+        writeln( "                    <th><span class=\"sort\" data-sort=\"Concept\">Concept</span></th>" );
         writeln( "                    <th><span class=\"sort\" data-sort=\"Description\">Description</span></th>" );
         writeln( "                    <th><span class=\"sort\" data-sort=\"Expectation\">Expectation</span></th>" );
         writeln( "                    <th><span class=\"sort\" data-sort=\"Prediction\">Prediction</span></th>" );
@@ -158,10 +160,10 @@ public final class TableReport extends WrapFile {
                  .filter( entry -> !entry.getKey( ).equals( "nb concepts" ) )
                  .forEach( entry -> sb.append( ( entry.getKey( ).equals( "nb leaf concepts" ) ) ? "Total" + ":" + entry.getValue( ).intValue( ) + "<br>"
                                                        : entry.getKey( ).toString( ) + ": " + entry.getValue( ).intValue( ) + "<br>" ) );
-            writeln( "                    <td class=\"Prior-Knowledge\">"   + concept + "<br>"+ stats.get( "nb concepts" ).intValue( ) + " prior-knowledges" + "</td>" );
+            writeln( "                    <td class=\"Concept\">"   + concept + "<br>"+ stats.get( "nb concepts" ).intValue( ) + " prior-knowledges" + "</td>" );
         }
         else
-            writeln( "                    <td class=\"Prior-Knowledge\">"   + concept  + "</td>" );
+            writeln( "                    <td class=\"Concept\">"   + concept  + "</td>" );
         writeln( "                    <td class=\"Description\">"       + description                       + "</td>" );
         writeln( "                    <td class=\"Expectation\">"       + expectation                       + "</td>" );
         writeln( "                    <td class=\"Prediction\">"        + prediction                        + "</td>" );
@@ -204,17 +206,19 @@ public final class TableReport extends WrapFile {
         super.finalize( );
     }
 
-    public void addStats(@NonNull final String content, @NonNull final String id, @NonNull final EnumMap<SensitivitySpecificity, List<PriorKnowledge>> stats ) throws IOException{
+    public void addStats(@NonNull final String content, @NonNull final String id, @NonNull final EnumMap<SensitivitySpecificity, List<PriorKnowledge>> stats, @NonNull final Map<PriorKnowledge,EnumMap<SensitivitySpecificity, List<PriorKnowledge>>> functional_units_stats ) throws IOException{
         writeln( "    <div id=\""+id+"\" class=\"tabcontent\">" );
         writeln( "        <table id=\""+id+"_table\">" );
         writeln( "            <colgroup>" );
-        writeln( "                <col width=\"70%\">" );
+        writeln( "                <col width=\"50%\">" );
         writeln( "                <col width=\"30%\">" );
+        writeln( "                <col width=\"20%\">" );
         writeln( "            <colgroup>" );
         writeln( "            <thead>" );
         writeln( "                <tr>" );
         writeln( "                    <th><span class=\"sort\" data-sort=\"Name\">Name</span></th>" );
         writeln( "                    <th><span class=\"sort\" data-sort=\"Values\">Values</span></th>" );
+        writeln( "                    <th><span class=\"sort\" data-sort=\"Accuracy\">Accuracy</span></th>" );
         writeln( "                </tr>" );
         writeln( "            </thead>" );
         writeln( "            <tbody  class=\"list\">" );
@@ -231,6 +235,52 @@ public final class TableReport extends WrapFile {
                     default: color ="#000000"; break;
                 }
                 writeln( "                    <td class=\"Values\"><font color=\""+color+"\">" + entry.getKey( ) + "</font></td>" );
+                final EnumMap<SensitivitySpecificity, List<PriorKnowledge>> fuStats = functional_units_stats.get( pk );
+                final EnumMap<SensitivitySpecificity,Integer> fuCount = fuStats.entrySet()
+                                                                               .stream()
+                                                                               .collect( Collectors.toMap( Map.Entry::getKey,
+                                                                                                           e -> e.getValue( ).size( ),
+                                                                                                           ( earlier, later) -> later,
+                                                                                                           () -> new EnumMap<>( SensitivitySpecificity.class) ) );
+                 writeln( "                    <td class=\"Accuracy\">" + SensitivitySpecificity.getAccuracyValue( fuCount ).toString() + "</td>" );
+                writeln( "                </tr>" );
+            }
+        }
+        writeln( "            </tbody>" );
+        writeln( "        </table>" );
+        writeln( "    </div>" );
+    }
+
+    public void addStats(@NonNull final String content, @NonNull final String id, @NonNull final EnumMap<SensitivitySpecificity, List<PriorKnowledge>> stats ) throws IOException{
+        writeln( "    <div id=\""+id+"\" class=\"tabcontent\">" );
+        writeln( "        <table id=\""+id+"_table\">" );
+        writeln( "            <colgroup>" );
+        writeln( "                <col width=\"50%\">" );
+        writeln( "                <col width=\"30%\">" );
+        writeln( "                <col width=\"20%\">" );
+        writeln( "            <colgroup>" );
+        writeln( "            <thead>" );
+        writeln( "                <tr>" );
+        writeln( "                    <th><span class=\"sort\" data-sort=\"Name\">Name</span></th>" );
+        writeln( "                    <th><span class=\"sort\" data-sort=\"Values\">Values</span></th>" );
+        writeln( "                    <th><span class=\"sort\" data-sort=\"Accuracy\">Accuracy</span></th>" );
+        writeln( "                </tr>" );
+        writeln( "            </thead>" );
+        writeln( "            <tbody  class=\"list\">" );
+        for( final Map.Entry<SensitivitySpecificity, List<PriorKnowledge>> entry : stats.entrySet() ){
+            for( final PriorKnowledge pk : entry.getValue() ){
+                String color = "#000000";
+                writeln( "                <tr>" );
+                writeln( "                    <td class=\"Name\">"+pk.getName()+"</td>" );
+                switch ( entry.getKey() ) {
+                    case TRUE_POSITIVE: color ="#00ff00"; break;
+                    case TRUE_NEGATIVE: color ="#00ff00"; break;
+                    case FALSE_POSITIVE: color ="#ff0000"; break;
+                    case FALSE_NEGATIVE: color ="#ff0000"; break;
+                    default: color ="#000000"; break;
+                }
+                writeln( "                    <td class=\"Values\"><font color=\""+color+"\">" + entry.getKey( ) + "</font></td>" );
+                writeln( "                    <td class=\"Accuracy\"> Not available</td>" );
                 writeln( "                </tr>" );
             }
         }
@@ -262,8 +312,8 @@ public final class TableReport extends WrapFile {
                 for ( final PriorKnowledge pk : entry.getValue( ) ) {
                     String color = "#000000";
                     writeln( "                <tr>" );
-                    writeln( "                    <td class=\"Top Concept\">" + topConcept.getName( ) + "</td>" );
-                    writeln( "                    <td class=\"Name\">" + pk.getName( )         + "</td>" );
+                    writeln( "                    <td class=\"Top Concept\">"   + topConcept.getName( ) + "</td>" );
+                    writeln( "                    <td class=\"Name\">"          + pk.getName( )         + "</td>" );
                     switch ( entry.getKey( ) ) {
                         case TRUE_POSITIVE:
                             color = "#00ff00";

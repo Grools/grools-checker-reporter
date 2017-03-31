@@ -496,7 +496,7 @@ public final class Reporter {
     
     public void close( ) throws IOException {
         tableReport.closeTable();
-        tableReport.addStats( "Pathways", "pathways_stats", pathwaysStats );
+        tableReport.addStats( "Pathways", "pathways_stats", pathwaysStats, functionalUnitsStats );
         tableReport.addStats( "Functional Units", "functional_units_stats", functionalUnitsStats );
         tableReport.close( );
         csvReport.close( );
